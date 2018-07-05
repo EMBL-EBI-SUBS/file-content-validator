@@ -1,60 +1,41 @@
 package uk.ac.ebi.subs.filecontentvalidator.service;
 
-import uk.ac.ebi.subs.data.fileupload.FileStatus;
-import uk.ac.ebi.subs.filecontentvalidator.exception.ErrorMessages;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
-import uk.ac.ebi.subs.repository.model.fileupload.File;
-import uk.ac.ebi.subs.repository.repos.fileupload.FileRepository;
+import uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.File;
 
+@RequiredArgsConstructor
 public class FileContentValidator {
 
-    private FileRepository fileRepository;
-
+    @NonNull
+    private String fileUuid;
+    @NonNull
     private String filePath;
+    @NonNull
+    private String fileType;
 
-    private File fileToValidate;
 
-    public FileContentValidator(FileRepository fileRepository, String filePath) {
-        this.fileRepository = fileRepository;
-        this.filePath = filePath;
+    public boolean validateParameters() {
+        validateFileExistence();
+
+        validateFileType();
+
+        return true;
     }
 
-    public boolean isFileExists() {
-        if (getFileToValidate() == null) {
+    private void validateFileExistence() {
+        File file = new File(filePath);
+        if(!file.exists() || file.isDirectory()) {
             throw new FileNotFoundException(filePath);
         }
-
-        return true;
     }
 
-    private File getFileToValidate() {
-        if (fileToValidate == null) {
-            if (filePath == null) {
-                throw new IllegalStateException(ErrorMessages.FILE_PATH_IS_EMPTY_OR_NULL);
-            }
-            this.fileToValidate = findFileByTargetPath();
+    private void validateFileType() {
+        if (!FileType.forName(fileType)) {
+            throw new NotSupportedFileTypeException(fileType);
         }
-
-        return fileToValidate;
-    }
-
-    private File findFileByTargetPath() {
-        return fileRepository.findByTargetPath(filePath);
-    }
-
-    public boolean isInValidStatusForContentValidation() {
-        if (!validStatusesForContentValidation().contains(getFileToValidate().getStatus())) {
-            throw new IllegalStateException(
-                    String.format(ErrorMessages.FILE_IN_ILLEGAL_STATE_MESSAGE, fileToValidate.getFilename()));
-        }
-
-        return true;
-    }
-
-    private List<FileStatus> validStatusesForContentValidation() {
-        return Arrays.asList(FileStatus.READY_FOR_CHECKSUM, FileStatus.READY_FOR_ARCHIVE);
     }
 }

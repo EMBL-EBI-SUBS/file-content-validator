@@ -31,7 +31,5 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-actuator')
 	compile('org.springframework.boot:spring-boot-starter-data-mongodb')
 
-	compile('uk.ac.ebi.subs:subs-repository:2.6.0-SNAPSHOT')
-
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }

@@ -1,20 +1,19 @@
 package uk.ac.ebi.subs.filecontentvalidator.service;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.subs.data.fileupload.FileStatus;
-import uk.ac.ebi.subs.filecontentvalidator.exception.ErrorMessages;
 import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
-import uk.ac.ebi.subs.repository.model.fileupload.File;
-import uk.ac.ebi.subs.repository.repos.fileupload.FileRepository;
+import uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException;
 
-import static org.mockito.Mockito.when;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException.FILE_NOT_FOUND_BY_TARGET_PATH;
+import static uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException.FILE_TYPE_NOT_SUPPORTED;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -22,62 +21,41 @@ public class FileContentValidatorTest {
 
     private FileContentValidator fileContentValidator;
 
-    @MockBean
-    private FileRepository fileRepository;
-
-    private File fileToValidate;
-
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private static final String TEST_FILE_TARGET_PATH = "/target/path/to/the/test/file";
-    private static final String TEST_FILE_INVALID_TARGET_PATH = "/invalid/path";
-    private static final String TEST_FILENAME = "test_file_for_file_content_validation.txt";
-    private static final String SUBMISSION_ID = "112233-aabbcc-223344";
-
-    @Before
-    public void setup() {
-        fileToValidate = createTestFile();
-    }
+    private static final String TEST_FILE_INVALID_PATH = "/invalid/path";
+    private static final String TEST_FILE_PATH = "src/test/resources/test_file_for_file_content_validation.txt";
+    private static final String FILE_UUID = "112233-aabbcc-223344";
+    private static final String FILE_TYPE = "fastQ";
+    private static final String NOT_SUPPORTED_FILE_TYPE = "text file";
 
     @Test
-    public void whenFileNotExistInRepository_ThenThrowsFileNotFoundException() {
-        when(fileRepository.findByTargetPath(TEST_FILE_INVALID_TARGET_PATH)).thenReturn(null);
+    public void whenFileIsNotExistsInTheProvidedPath_ThenThrowsFileNotFoundException() {
+        fileContentValidator = new FileContentValidator(FILE_UUID, TEST_FILE_INVALID_PATH, FILE_TYPE);
 
         this.thrown.expect(FileNotFoundException.class);
-        this.thrown.expectMessage(String.format(FileNotFoundException.FILE_NOT_FOUND_BY_TARGET_PATH, TEST_FILE_INVALID_TARGET_PATH));
+        this.thrown.expectMessage(String.format(FILE_NOT_FOUND_BY_TARGET_PATH, TEST_FILE_INVALID_PATH));
 
-        fileContentValidator = new FileContentValidator(fileRepository, TEST_FILE_INVALID_TARGET_PATH);
-        fileContentValidator.isFileExists();
+        fileContentValidator.validateParameters();
     }
 
     @Test
-    public void whenStatusIsNotCorrectForFileContentValidation_ThenThrowsIllagelStateException() {
-        fileToValidate.setStatus(FileStatus.UPLOADING);
-        when(fileRepository.findByTargetPath(TEST_FILE_TARGET_PATH)).thenReturn(fileToValidate);
+    public void whenUnsupportedFileTypeProvided_ThenThrowsNotSupportedFileTypeException() {
+        fileContentValidator = new FileContentValidator(FILE_UUID, TEST_FILE_PATH, NOT_SUPPORTED_FILE_TYPE);
 
-        this.thrown.expect(IllegalStateException.class);
-        this.thrown.expectMessage(String.format(
-                ErrorMessages.FILE_IN_ILLEGAL_STATE_MESSAGE, fileToValidate.getFilename()));
+        this.thrown.expect(NotSupportedFileTypeException.class);
+        this.thrown.expectMessage(String.format(FILE_TYPE_NOT_SUPPORTED, NOT_SUPPORTED_FILE_TYPE));
 
-        fileContentValidator = new FileContentValidator(fileRepository, TEST_FILE_TARGET_PATH);
-        fileContentValidator.isInValidStatusForContentValidation();
+        fileContentValidator.validateParameters();
     }
 
-    private File createTestFile() {
-        File file = new File();
-        file.setFilename(TEST_FILENAME);
-        file.setStatus(FileStatus.READY_FOR_CHECKSUM);
-        file.setSubmissionId(SUBMISSION_ID);
+    @Test
+    public void whenParametersValid_ThenNoErrors() {
+        fileContentValidator = new FileContentValidator(FILE_UUID, TEST_FILE_PATH, FILE_TYPE);
 
-        ClassLoader classLoader = getClass().getClassLoader();
-        String filePath = new java.io.File(classLoader.getResource(TEST_FILENAME).getFile()).getAbsolutePath();
-
-
-        file.setTargetPath(filePath);
-
-        return file;
-
+        assertThat(fileContentValidator.validateParameters(), is(equalTo(true)));
     }
+
 
 }

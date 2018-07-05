@@ -7,7 +7,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 import org.springframework.context.ConfigurableApplicationContext;
-import uk.ac.ebi.subs.repository.repos.fileupload.FileRepository;
 
 /**
  * This will be a command line Spring Boot application for validating the content of a given file.
