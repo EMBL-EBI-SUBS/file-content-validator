@@ -4,58 +4,47 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
-import uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException;
+import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import java.io.IOException;
+
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.isEmptyString;
 import static org.junit.Assert.assertThat;
-import static uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException.FILE_NOT_FOUND_BY_TARGET_PATH;
-import static uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException.FILE_TYPE_NOT_SUPPORTED;
+import static org.mockito.Mockito.doReturn;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class FileContentValidatorTest {
 
+    @SpyBean
     private FileContentValidator fileContentValidator;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private static final String TEST_FILE_INVALID_PATH = "/invalid/path";
     private static final String TEST_FILE_PATH = "src/test/resources/test_file_for_file_content_validation.txt";
     private static final String FILE_UUID = "112233-aabbcc-223344";
     private static final String FILE_TYPE = "fastQ";
-    private static final String NOT_SUPPORTED_FILE_TYPE = "text file";
 
     @Test
-    public void whenFileIsNotExistsInTheProvidedPath_ThenThrowsFileNotFoundException() {
-        fileContentValidator = new FileContentValidator(FILE_UUID, TEST_FILE_INVALID_PATH, FILE_TYPE);
+    public void whenFileExistsButItsContentsGotError_ThenValidationResultHasError() throws IOException, InterruptedException {
+        CommandLineParams commandLineParams = new CommandLineParams();
+        commandLineParams.setFilePath(TEST_FILE_PATH);
+        commandLineParams.setFileType(FILE_TYPE);
+        commandLineParams.setFileUuid(FILE_UUID);
 
-        this.thrown.expect(FileNotFoundException.class);
-        this.thrown.expectMessage(String.format(FILE_NOT_FOUND_BY_TARGET_PATH, TEST_FILE_INVALID_PATH));
+        doReturn(commandLineParams).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(new StringBuilder("ERROR: This is an error")).when(this.fileContentValidator).executeValidationAndGetResult();
 
-        fileContentValidator.validateParameters();
+        fileContentValidator.validateFileContent();
+
+        String validationError = fileContentValidator.getValidationError();
+
+        assertThat(validationError, not(isEmptyString()));
     }
-
-    @Test
-    public void whenUnsupportedFileTypeProvided_ThenThrowsNotSupportedFileTypeException() {
-        fileContentValidator = new FileContentValidator(FILE_UUID, TEST_FILE_PATH, NOT_SUPPORTED_FILE_TYPE);
-
-        this.thrown.expect(NotSupportedFileTypeException.class);
-        this.thrown.expectMessage(String.format(FILE_TYPE_NOT_SUPPORTED, NOT_SUPPORTED_FILE_TYPE));
-
-        fileContentValidator.validateParameters();
-    }
-
-    @Test
-    public void whenParametersValid_ThenNoErrors() {
-        fileContentValidator = new FileContentValidator(FILE_UUID, TEST_FILE_PATH, FILE_TYPE);
-
-        assertThat(fileContentValidator.validateParameters(), is(equalTo(true)));
-    }
-
-
 }
