@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CommandLineParams {
 
-    @Value("${fileContentValidator.validationResultUUID:}")
+    @Value("${fileContentValidator.validationResultUUID}")
     private String validationResultUUID;
-    @Value("${fileContentValidator.filePath:}")
+    @Value("${fileContentValidator.filePath}")
     private String filePath;
-    @Value("${fileContentValidator.fileType:}")
+    @Value("${fileContentValidator.fileType}")
     private String fileType;
 }

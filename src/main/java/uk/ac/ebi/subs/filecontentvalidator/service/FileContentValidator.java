@@ -1,6 +1,7 @@
 package uk.ac.ebi.subs.filecontentvalidator.service;
 
 import lombok.Data;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,7 @@ public class FileContentValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileContentValidator.class);
 
+    @NonNull
     private CommandLineParams commandLineParams;
 
     private static final String ERROR_RESULT_BEGINNING = "ERROR:";
