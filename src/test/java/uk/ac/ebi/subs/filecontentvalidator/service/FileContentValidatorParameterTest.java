@@ -5,8 +5,10 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
 import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
 import uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException;
 
@@ -18,7 +20,7 @@ import static uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundExceptio
 import static uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException.FILE_TYPE_NOT_SUPPORTED;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(classes = {FileContentValidator.class, CommandLineParams.class })
 public class FileContentValidatorParameterTest {
 
     @SpyBean

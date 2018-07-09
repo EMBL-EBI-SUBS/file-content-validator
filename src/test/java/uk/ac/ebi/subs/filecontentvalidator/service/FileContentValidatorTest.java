@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
@@ -23,7 +24,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(classes = {FileContentValidator.class, CommandLineParams.class })
 public class FileContentValidatorTest {
 
     @SpyBean
