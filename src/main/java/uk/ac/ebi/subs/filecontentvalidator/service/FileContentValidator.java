@@ -8,11 +8,15 @@ import org.springframework.stereotype.Service;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
 import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
 import uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException;
+import uk.ac.ebi.subs.validator.data.SingleValidationResult;
+import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
+import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.UUID;
 
 @Data
 @Service
@@ -34,22 +38,24 @@ public class FileContentValidator {
         return this.commandLineParams;
     }
 
-    public void validateFileContent() throws IOException, InterruptedException {
+    public SingleValidationResult validateFileContent() throws IOException, InterruptedException {
         validateParameters();
 
-        StringBuilder output = executeValidationAndGetResult();
-        String resultMessage = "";
+        String output = executeValidationAndGetResult();
+        String resultMessage;
 
         int last = output.lastIndexOf("\n");
         if (last >= 0) {
-            resultMessage = output.delete(last, output.length()).toString();
+            resultMessage = output.substring(last, output.length());
             if (resultMessage.contains(ERROR_RESULT_BEGINNING)) {
                 validationError = resultMessage.replace(ERROR_RESULT_BEGINNING, "").trim();
             }
         }
+
+        return buildSingleValidationResult();
     }
 
-    StringBuilder executeValidationAndGetResult() throws IOException, InterruptedException {
+    String executeValidationAndGetResult() throws IOException, InterruptedException {
         String commandToExecuteValidation = assembleValidatorCommand();
 
         StringBuilder output = new StringBuilder();
@@ -68,7 +74,7 @@ public class FileContentValidator {
             output.append(line);
         }
 
-        return output;
+        return output.toString();
     }
 
     private String assembleValidatorCommand() {
@@ -96,4 +102,16 @@ public class FileContentValidator {
         }
     }
 
+    SingleValidationResult buildSingleValidationResult() {
+        SingleValidationResult singleValidationResult =
+                new SingleValidationResult(ValidationAuthor.FileContent, UUID.randomUUID().toString());
+        if (validationError != null) {
+            singleValidationResult.setMessage(validationError);
+            singleValidationResult.setValidationStatus(SingleValidationResultStatus.Error);
+        } else {
+            singleValidationResult.setValidationStatus(SingleValidationResultStatus.Pass);
+        }
+
+        return singleValidationResult;
+    }
 }

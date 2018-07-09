@@ -23,12 +23,15 @@ mainClassName = "uk.ac.ebi.subs.FileContentValidatorApplication"
 
 repositories {
 	mavenCentral()
+	maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
 }
 
 dependencies {
     compileOnly('org.projectlombok:lombok')
 
     compile('org.springframework.boot:spring-boot-starter')
+    compile('uk.ac.ebi.subs:validator-common:2.6.3-SNAPSHOT')
+    compile('uk.ac.ebi.subs:subs-messaging:0.4.0-SNAPSHOT')
 
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
