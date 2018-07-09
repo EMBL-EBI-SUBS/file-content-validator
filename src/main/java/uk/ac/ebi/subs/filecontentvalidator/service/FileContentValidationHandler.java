@@ -4,6 +4,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.stereotype.Service;
+import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
 import uk.ac.ebi.subs.messaging.Exchanges;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 import uk.ac.ebi.subs.validator.data.SingleValidationResultsEnvelope;
@@ -21,6 +22,9 @@ public class FileContentValidationHandler {
 
     @NonNull
     private FileContentValidator fileContentValidator;
+
+    @NonNull
+    private CommandLineParams commandLineParams;
 
     @NonNull
     private RabbitMessagingTemplate rabbitMessagingTemplate;
@@ -44,7 +48,7 @@ public class FileContentValidationHandler {
         return new SingleValidationResultsEnvelope(
                 singleValidationResults,
                 CONTENT_VALIDATION_RESULT_VERSION,
-                fileContentValidator.getCommandLineParams().getValidationResultUUID(),
+                commandLineParams.getValidationResultUUID(),
                 ValidationAuthor.Core
         );
     }
