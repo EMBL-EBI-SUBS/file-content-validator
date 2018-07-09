@@ -32,13 +32,14 @@ public class FileContentValidatorParameterTest {
     private static final String TEST_FILE_INVALID_PATH = "/invalid/path";
     private static final String TEST_FILE_PATH = "src/test/resources/test_file_for_file_content_validation.txt";
     private static final String VALIDATION_RESULT_UUID = "112233-aabbcc-223344";
+    private static final String FILE_UUID = "9999-aabbcc-223344";
     private static final String FILE_TYPE = "fastQ";
     private static final String NOT_SUPPORTED_FILE_TYPE = "text file";
 
     @Test
     public void whenFileIsNotExistsInTheProvidedPath_ThenThrowsFileNotFoundException() {
 
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, TEST_FILE_INVALID_PATH, FILE_TYPE))
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_INVALID_PATH, FILE_TYPE))
                 .when(this.fileContentValidator).getCommandLineParams();
 
         this.thrown.expect(FileNotFoundException.class);
@@ -49,7 +50,7 @@ public class FileContentValidatorParameterTest {
 
     @Test
     public void whenUnsupportedFileTypeProvided_ThenThrowsNotSupportedFileTypeException() {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, TEST_FILE_PATH, NOT_SUPPORTED_FILE_TYPE))
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, NOT_SUPPORTED_FILE_TYPE))
                 .when(this.fileContentValidator).getCommandLineParams();
 
         this.thrown.expect(NotSupportedFileTypeException.class);
@@ -60,7 +61,7 @@ public class FileContentValidatorParameterTest {
 
     @Test
     public void whenParametersValid_ThenNoErrors() {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, TEST_FILE_PATH, FILE_TYPE))
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE))
                 .when(this.fileContentValidator).getCommandLineParams();
 
         assertThat(fileContentValidator.validateParameters(), is(equalTo(true)));

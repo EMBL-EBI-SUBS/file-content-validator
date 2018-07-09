@@ -35,6 +35,7 @@ public class FileContentValidatorTest {
 
     private static final String TEST_FILE_PATH = "src/test/resources/test_file_for_file_content_validation.txt";
     private static final String VALIDATION_RESULT_UUID = "112233-aabbcc-223344";
+    private static final String FILE_UUID = "9999-aabbcc-223344";
     private static final String FILE_TYPE = "fastQ";
     private static final String ERROR_MESSAGE = "This is an error";
     private static final String FULL_ERROR_MESSAGE = "This is some text \nThis is another text \nERROR: %s";
@@ -47,7 +48,7 @@ public class FileContentValidatorTest {
 
     @Test
     public void whenFileExistsButItsContentsGotError_ThenValidationResultHasError() throws IOException, InterruptedException {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
         doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fileContentValidator).executeValidationAndGetResult();
 
         fileContentValidator.validateFileContent();
@@ -59,7 +60,7 @@ public class FileContentValidatorTest {
 
     @Test
     public void whenFileExistsAndItsContentsCorrect_ThenValidationResultHasOK() throws IOException, InterruptedException {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
         doReturn(OK_MESSAGE).when(this.fileContentValidator).executeValidationAndGetResult();
 
         fileContentValidator.validateFileContent();
@@ -71,7 +72,7 @@ public class FileContentValidatorTest {
 
     @Test
     public void whenFileExistsButItsContentsGotError_ThenSingleValidationResultContainsTheError() throws IOException, InterruptedException {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
         doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fileContentValidator).executeValidationAndGetResult();
 
         fileContentValidator.validateFileContent();
@@ -84,7 +85,7 @@ public class FileContentValidatorTest {
 
     @Test
     public void whenFileExistsAndItsContentsCorrect_ThenSingleValidationResultContainsPassedStatus() throws IOException, InterruptedException {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
         doReturn(OK_MESSAGE).when(this.fileContentValidator).executeValidationAndGetResult();
 
         fileContentValidator.validateFileContent();

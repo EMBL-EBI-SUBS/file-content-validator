@@ -106,7 +106,7 @@ public class FileContentValidator {
 
     SingleValidationResult buildSingleValidationResult() {
         SingleValidationResult singleValidationResult =
-                new SingleValidationResult(ValidationAuthor.FileContent, UUID.randomUUID().toString());
+                new SingleValidationResult(ValidationAuthor.FileContent, getCommandLineParams().getFileUUID());
         if (validationError != null) {
             singleValidationResult.setMessage(validationError);
             singleValidationResult.setValidationStatus(SingleValidationResultStatus.Error);
