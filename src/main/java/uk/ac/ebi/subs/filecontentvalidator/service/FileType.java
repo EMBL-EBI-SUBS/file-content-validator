@@ -22,6 +22,6 @@ public enum FileType {
     }
 
     public static boolean forName(String name) {
-        return SUPPORTED_TYPES.contains(name);
+        return SUPPORTED_TYPES.contains(name.toUpperCase());
     }
 }
