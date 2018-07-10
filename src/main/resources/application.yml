@@ -1,0 +1,3 @@
+fileContentValidator:
+  fastQ:
+    validatorPath: /path/to/fastq/validator

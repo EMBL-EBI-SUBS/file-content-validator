@@ -6,78 +6,92 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.junit4.SpringRunner;
-import uk.ac.ebi.subs.data.fileupload.FileStatus;
-import uk.ac.ebi.subs.filecontentvalidator.exception.ErrorMessages;
-import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
-import uk.ac.ebi.subs.repository.model.fileupload.File;
-import uk.ac.ebi.subs.repository.repos.fileupload.FileRepository;
+import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
+import uk.ac.ebi.subs.validator.data.SingleValidationResult;
+import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
+import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
-import static org.mockito.Mockito.when;
+import java.io.IOException;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.isEmptyString;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.doReturn;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(classes = {FileContentValidator.class, CommandLineParams.class })
 public class FileContentValidatorTest {
 
+    @SpyBean
     private FileContentValidator fileContentValidator;
-
-    @MockBean
-    private FileRepository fileRepository;
-
-    private File fileToValidate;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private static final String TEST_FILE_TARGET_PATH = "/target/path/to/the/test/file";
-    private static final String TEST_FILE_INVALID_TARGET_PATH = "/invalid/path";
-    private static final String TEST_FILENAME = "test_file_for_file_content_validation.txt";
-    private static final String SUBMISSION_ID = "112233-aabbcc-223344";
+    private static final String TEST_FILE_PATH = "src/test/resources/test_file_for_file_content_validation.txt";
+    private static final String VALIDATION_RESULT_UUID = "112233-aabbcc-223344";
+    private static final String FILE_UUID = "9999-aabbcc-223344";
+    private static final String FILE_TYPE = "fastQ";
+    private static final String ERROR_MESSAGE = "This is an error";
+    private static final String FULL_ERROR_MESSAGE = "This is some text \nThis is another text \nERROR: %s";
+    private static final String OK_MESSAGE = "OK";
 
     @Before
     public void setup() {
-        fileToValidate = createTestFile();
+        fileContentValidator.setValidationError(null);
     }
 
     @Test
-    public void whenFileNotExistInRepository_ThenThrowsFileNotFoundException() {
-        when(fileRepository.findByTargetPath(TEST_FILE_INVALID_TARGET_PATH)).thenReturn(null);
+    public void whenFileExistsButItsContentsGotError_ThenValidationResultHasError() throws IOException, InterruptedException {
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fileContentValidator).executeValidationAndGetResult();
 
-        this.thrown.expect(FileNotFoundException.class);
-        this.thrown.expectMessage(String.format(FileNotFoundException.FILE_NOT_FOUND_BY_TARGET_PATH, TEST_FILE_INVALID_TARGET_PATH));
+        fileContentValidator.validateFileContent();
 
-        fileContentValidator = new FileContentValidator(fileRepository, TEST_FILE_INVALID_TARGET_PATH);
-        fileContentValidator.isFileExists();
+        String validationError = fileContentValidator.getValidationError();
+
+        assertThat(validationError, not(isEmptyString()));
     }
 
     @Test
-    public void whenStatusIsNotCorrectForFileContentValidation_ThenThrowsIllagelStateException() {
-        fileToValidate.setStatus(FileStatus.UPLOADING);
-        when(fileRepository.findByTargetPath(TEST_FILE_TARGET_PATH)).thenReturn(fileToValidate);
+    public void whenFileExistsAndItsContentsCorrect_ThenValidationResultHasOK() throws IOException, InterruptedException {
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(OK_MESSAGE).when(this.fileContentValidator).executeValidationAndGetResult();
 
-        this.thrown.expect(IllegalStateException.class);
-        this.thrown.expectMessage(String.format(
-                ErrorMessages.FILE_IN_ILLEGAL_STATE_MESSAGE, fileToValidate.getFilename()));
+        fileContentValidator.validateFileContent();
 
-        fileContentValidator = new FileContentValidator(fileRepository, TEST_FILE_TARGET_PATH);
-        fileContentValidator.isInValidStatusForContentValidation();
+        String validationError = fileContentValidator.getValidationError();
+
+        assertThat(validationError, isEmptyOrNullString());
     }
 
-    private File createTestFile() {
-        File file = new File();
-        file.setFilename(TEST_FILENAME);
-        file.setStatus(FileStatus.READY_FOR_CHECKSUM);
-        file.setSubmissionId(SUBMISSION_ID);
+    @Test
+    public void whenFileExistsButItsContentsGotError_ThenSingleValidationResultContainsTheError() throws IOException, InterruptedException {
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fileContentValidator).executeValidationAndGetResult();
 
-        ClassLoader classLoader = getClass().getClassLoader();
-        String filePath = new java.io.File(classLoader.getResource(TEST_FILENAME).getFile()).getAbsolutePath();
+        fileContentValidator.validateFileContent();
+        SingleValidationResult singleValidationResult = fileContentValidator.buildSingleValidationResult();
 
-
-        file.setTargetPath(filePath);
-
-        return file;
-
+        assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Error)));
+        assertThat(singleValidationResult.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
+        assertThat(singleValidationResult.getMessage(), is(equalTo(ERROR_MESSAGE)));
     }
 
+    @Test
+    public void whenFileExistsAndItsContentsCorrect_ThenSingleValidationResultContainsPassedStatus() throws IOException, InterruptedException {
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
+        doReturn(OK_MESSAGE).when(this.fileContentValidator).executeValidationAndGetResult();
+
+        fileContentValidator.validateFileContent();
+        SingleValidationResult singleValidationResult = fileContentValidator.buildSingleValidationResult();
+
+        assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Pass)));
+        assertThat(singleValidationResult.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
+    }
 }
