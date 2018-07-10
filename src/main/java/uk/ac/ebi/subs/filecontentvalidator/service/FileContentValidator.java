@@ -6,9 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
-import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
-import uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
@@ -17,7 +16,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.UUID;
 
 @Data
 @Service
@@ -31,7 +29,7 @@ public class FileContentValidator {
     private static final String ERROR_RESULT_BEGINNING = "ERROR:";
     private static final String OK_RESULT_BEGINNING = "OK";
 
-    private String validationError;
+    private String validationError = "";
 
     @Value("${fileContentValidator.fastQ.validatorPath}")
     private String validatorPath;
@@ -84,30 +82,34 @@ public class FileContentValidator {
     }
 
     boolean validateParameters() {
+        validationError = "";
+
         validateFileExistence();
 
         validateFileType();
 
-        return true;
+        return StringUtils.isEmpty(validationError);
     }
 
     private void validateFileExistence() {
-        File file = new File(getCommandLineParams().getFilePath());
+        String filePath = getCommandLineParams().getFilePath();
+        File file = new File(filePath);
         if(!file.exists() || file.isDirectory()) {
-            throw new FileNotFoundException(getCommandLineParams().getFilePath());
+            this.validationError = String.format(ErrorMessages.FILE_NOT_FOUND_BY_TARGET_PATH, filePath);
         }
     }
 
     private void validateFileType() {
-        if (!FileType.forName(getCommandLineParams().getFileType())) {
-            throw new NotSupportedFileTypeException(getCommandLineParams().getFileType());
+        String fileType = getCommandLineParams().getFileType();
+        if (!FileType.forName(fileType)) {
+            this.validationError = String.format(ErrorMessages.FILE_TYPE_NOT_SUPPORTED, fileType);
         }
     }
 
     SingleValidationResult buildSingleValidationResult() {
         SingleValidationResult singleValidationResult =
                 new SingleValidationResult(ValidationAuthor.FileContent, getCommandLineParams().getFileUUID());
-        if (validationError != null) {
+        if (!StringUtils.isEmpty(validationError)) {
             singleValidationResult.setMessage(validationError);
             singleValidationResult.setValidationStatus(SingleValidationResultStatus.Error);
         } else {
