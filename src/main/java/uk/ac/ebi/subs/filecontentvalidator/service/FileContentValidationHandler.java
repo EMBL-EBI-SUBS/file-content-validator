@@ -49,7 +49,7 @@ public class FileContentValidationHandler {
                 singleValidationResults,
                 CONTENT_VALIDATION_RESULT_VERSION,
                 commandLineParams.getValidationResultUUID(),
-                ValidationAuthor.Core
+                ValidationAuthor.FileContent
         );
     }
 
