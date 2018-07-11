@@ -12,10 +12,8 @@ import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +40,7 @@ public class FileContentValidator {
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
         List<SingleValidationResult> singleValidationResults = validateParameters();
 
-        String output = executeValidationAndGetResult();
+        String output = executeValidationAndGetResult().trim();
         String resultMessage;
 
         int last = output.lastIndexOf("\n");
@@ -65,23 +63,14 @@ public class FileContentValidator {
     String executeValidationAndGetResult() throws IOException, InterruptedException {
         String commandToExecuteValidation = assembleValidatorCommand();
 
-        StringBuilder output = new StringBuilder();
-
-        Runtime rt = Runtime.getRuntime();
-        Process process = rt.exec(commandToExecuteValidation);
-        process.waitFor();
-        BufferedReader reader =
-                new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-        String line;
-        while ((line = reader.readLine())!= null) {
-            if (output.length() > 0) {
-                output.append("\n");
-            }
-            output.append(line);
+        java.util.Scanner validationResult = new java.util.Scanner(Runtime.getRuntime().exec(commandToExecuteValidation)
+                .getInputStream()).useDelimiter("\\A");
+        if (!validationResult.hasNext()) {
+            validationResult = new java.util.Scanner(Runtime.getRuntime().exec(commandToExecuteValidation)
+                    .getErrorStream()).useDelimiter("\\A");
         }
 
-        return output.toString();
+        return validationResult.hasNext() ? validationResult.next() : "";
     }
 
     private String assembleValidatorCommand() {
