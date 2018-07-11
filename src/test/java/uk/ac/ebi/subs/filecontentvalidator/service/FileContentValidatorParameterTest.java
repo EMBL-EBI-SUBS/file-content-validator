@@ -34,7 +34,7 @@ public class FileContentValidatorParameterTest {
         String expectedValidationError = String.format(ErrorMessages.FILE_NOT_FOUND_BY_TARGET_PATH, TEST_FILE_INVALID_PATH);
 
         assertThat(fileContentValidator.validateParameters(), is(equalTo(false)));
-        assertThat(fileContentValidator.getValidationError(), is(equalTo(expectedValidationError)));
+        assertThat(fileContentValidator.getValidationErrors().get(0), is(equalTo(expectedValidationError)));
     }
 
     @Test
@@ -45,7 +45,7 @@ public class FileContentValidatorParameterTest {
         String expectedValidationError = String.format(ErrorMessages.FILE_TYPE_NOT_SUPPORTED, NOT_SUPPORTED_FILE_TYPE);
 
         assertThat(fileContentValidator.validateParameters(), is(equalTo(false)));
-        assertThat(fileContentValidator.getValidationError(), is(equalTo(expectedValidationError)));
+        assertThat(fileContentValidator.getValidationErrors().get(0), is(equalTo(expectedValidationError)));
     }
 
     @Test

@@ -14,12 +14,12 @@ import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
 import java.io.IOException;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.Matchers.emptyIterable;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.doReturn;
 
@@ -43,7 +43,7 @@ public class FileContentValidatorTest {
 
     @Before
     public void setup() {
-        fileContentValidator.setValidationError(null);
+        fileContentValidator.setValidationErrors(null);
     }
 
     @Test
@@ -53,9 +53,9 @@ public class FileContentValidatorTest {
 
         fileContentValidator.validateFileContent();
 
-        String validationError = fileContentValidator.getValidationError();
+        List<String> validationError = fileContentValidator.getValidationErrors();
 
-        assertThat(validationError, not(isEmptyString()));
+        assertThat(validationError, hasSize(1));
     }
 
     @Test
@@ -65,9 +65,9 @@ public class FileContentValidatorTest {
 
         fileContentValidator.validateFileContent();
 
-        String validationError = fileContentValidator.getValidationError();
+        List<String> validationError = fileContentValidator.getValidationErrors();
 
-        assertThat(validationError, isEmptyOrNullString());
+        assertThat(validationError, emptyIterable());
     }
 
     @Test
@@ -75,8 +75,11 @@ public class FileContentValidatorTest {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
         doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fileContentValidator).executeValidationAndGetResult();
 
-        fileContentValidator.validateFileContent();
-        SingleValidationResult singleValidationResult = fileContentValidator.buildSingleValidationResult();
+        List<SingleValidationResult> singleValidationResults = fileContentValidator.validateFileContent();
+
+        assertThat(singleValidationResults, hasSize(1));
+
+        SingleValidationResult singleValidationResult = singleValidationResults.get(0);
 
         assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Error)));
         assertThat(singleValidationResult.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
@@ -88,8 +91,11 @@ public class FileContentValidatorTest {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
         doReturn(OK_MESSAGE).when(this.fileContentValidator).executeValidationAndGetResult();
 
-        fileContentValidator.validateFileContent();
-        SingleValidationResult singleValidationResult = fileContentValidator.buildSingleValidationResult();
+        List<SingleValidationResult> singleValidationResults = fileContentValidator.validateFileContent();
+
+        assertThat(singleValidationResults, hasSize(1));
+
+        SingleValidationResult singleValidationResult = singleValidationResults.get(0);
 
         assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Pass)));
         assertThat(singleValidationResult.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));

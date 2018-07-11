@@ -36,7 +36,7 @@ public class FileContentValidationHandler {
     public void handleFileContentValidation() throws IOException, InterruptedException {
         List<SingleValidationResult> singleValidationResultList = new ArrayList<>();
 
-        singleValidationResultList.add(fileContentValidator.validateFileContent());
+        singleValidationResultList.addAll(fileContentValidator.validateFileContent());
 
         SingleValidationResultsEnvelope singleValidationResultsEnvelope =
                 generateSingleValidationResultsEnvelope(singleValidationResultList);

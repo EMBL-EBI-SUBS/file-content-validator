@@ -16,6 +16,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Service
@@ -29,7 +32,7 @@ public class FileContentValidator {
     private static final String ERROR_RESULT_BEGINNING = "ERROR:";
     private static final String OK_RESULT_BEGINNING = "OK";
 
-    private String validationError = "";
+    private List<String> validationErrors;
 
     @Value("${fileContentValidator.fastQ.validatorPath}")
     private String validatorPath;
@@ -38,7 +41,9 @@ public class FileContentValidator {
         return this.commandLineParams;
     }
 
-    public SingleValidationResult validateFileContent() throws IOException, InterruptedException {
+    public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
+        List<SingleValidationResult> singleValidationResults = new ArrayList<>();
+
         validateParameters();
 
         String output = executeValidationAndGetResult();
@@ -48,11 +53,19 @@ public class FileContentValidator {
         if (last >= 0) {
             resultMessage = output.substring(last, output.length());
             if (resultMessage.contains(ERROR_RESULT_BEGINNING)) {
-                validationError = resultMessage.replace(ERROR_RESULT_BEGINNING, "").trim();
+                validationErrors.add(resultMessage.replace(ERROR_RESULT_BEGINNING, "").trim());
             }
         }
 
-        return buildSingleValidationResult();
+        singleValidationResults = validationErrors.stream()
+                .map(this::buildSingleValidationResultWithErrorStatus)
+                .collect(Collectors.toList());
+
+        if (singleValidationResults.size() == 0) {
+            singleValidationResults.add(buildSingleValidationResultWithPassStatus());
+        }
+
+        return singleValidationResults;
     }
 
     String executeValidationAndGetResult() throws IOException, InterruptedException {
@@ -82,35 +95,47 @@ public class FileContentValidator {
     }
 
     boolean validateParameters() {
-        validationError = "";
+        initValidationErrors();
 
         validateFileExistence();
 
         validateFileType();
 
-        return StringUtils.isEmpty(validationError);
+        return validationErrors.size() == 0;
+    }
+
+    private void initValidationErrors() {
+        this.validationErrors = new ArrayList<>();
     }
 
     private void validateFileExistence() {
         String filePath = getCommandLineParams().getFilePath();
         File file = new File(filePath);
         if(!file.exists() || file.isDirectory()) {
-            this.validationError = String.format(ErrorMessages.FILE_NOT_FOUND_BY_TARGET_PATH, filePath);
+            this.validationErrors.add(String.format(ErrorMessages.FILE_NOT_FOUND_BY_TARGET_PATH, filePath));
         }
     }
 
     private void validateFileType() {
         String fileType = getCommandLineParams().getFileType();
         if (!FileType.forName(fileType)) {
-            this.validationError = String.format(ErrorMessages.FILE_TYPE_NOT_SUPPORTED, fileType);
+            this.validationErrors.add(String.format(ErrorMessages.FILE_TYPE_NOT_SUPPORTED, fileType));
         }
     }
 
-    SingleValidationResult buildSingleValidationResult() {
+    private SingleValidationResult buildSingleValidationResultWithErrorStatus(String errrorMessage) {
+        return buildSingleValidationResult(errrorMessage);
+    }
+
+    private SingleValidationResult buildSingleValidationResultWithPassStatus() {
+        return buildSingleValidationResult("");
+    }
+
+    private SingleValidationResult buildSingleValidationResult(String errorMessage) {
         SingleValidationResult singleValidationResult =
                 new SingleValidationResult(ValidationAuthor.FileContent, getCommandLineParams().getFileUUID());
-        if (!StringUtils.isEmpty(validationError)) {
-            singleValidationResult.setMessage(validationError);
+        if (!StringUtils.isEmpty(errorMessage)) {
+            singleValidationResult.setMessage(errorMessage);
             singleValidationResult.setValidationStatus(SingleValidationResultStatus.Error);
         } else {
             singleValidationResult.setValidationStatus(SingleValidationResultStatus.Pass);
