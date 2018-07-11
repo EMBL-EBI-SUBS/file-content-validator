@@ -6,9 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
-import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
-import uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
@@ -17,7 +16,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Data
 @Service
@@ -31,8 +32,6 @@ public class FileContentValidator {
     private static final String ERROR_RESULT_BEGINNING = "ERROR:";
     private static final String OK_RESULT_BEGINNING = "OK";
 
-    private String validationError;
-
     @Value("${fileContentValidator.fastQ.validatorPath}")
     private String validatorPath;
 
@@ -40,8 +39,8 @@ public class FileContentValidator {
         return this.commandLineParams;
     }
 
-    public SingleValidationResult validateFileContent() throws IOException, InterruptedException {
-        validateParameters();
+    public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
+        List<SingleValidationResult> singleValidationResults = validateParameters();
 
         String output = executeValidationAndGetResult();
         String resultMessage;
@@ -50,11 +49,17 @@ public class FileContentValidator {
         if (last >= 0) {
             resultMessage = output.substring(last, output.length());
             if (resultMessage.contains(ERROR_RESULT_BEGINNING)) {
-                validationError = resultMessage.replace(ERROR_RESULT_BEGINNING, "").trim();
+                singleValidationResults.add(
+                        buildSingleValidationResultWithErrorStatus(
+                                resultMessage.replace(ERROR_RESULT_BEGINNING, "").trim()));
             }
         }
 
-        return buildSingleValidationResult();
+        if (singleValidationResults.size() == 0) {
+            singleValidationResults.add(buildSingleValidationResultWithPassStatus());
+        }
+
+        return singleValidationResults;
     }
 
     String executeValidationAndGetResult() throws IOException, InterruptedException {
@@ -83,32 +88,50 @@ public class FileContentValidator {
         return String.join(" ", validatorPath, getCommandLineParams().getFilePath());
     }
 
-    boolean validateParameters() {
-        validateFileExistence();
 
-        validateFileType();
+    List<SingleValidationResult> validateParameters() {
 
-        return true;
+        List<SingleValidationResult> validationErrors = new ArrayList<>();
+
+        validateFileExistence().ifPresent(validationErrors::add);
+
+        validateFileType().ifPresent(validationErrors::add);
+
+        return validationErrors;
     }
 
-    private void validateFileExistence() {
-        File file = new File(getCommandLineParams().getFilePath());
+    private Optional<SingleValidationResult> validateFileExistence() {
+        String filePath = getCommandLineParams().getFilePath();
+        File file = new File(filePath);
         if(!file.exists() || file.isDirectory()) {
-            throw new FileNotFoundException(getCommandLineParams().getFilePath());
+            return Optional.of(buildSingleValidationResultWithErrorStatus(String.format(ErrorMessages.FILE_NOT_FOUND_BY_TARGET_PATH, filePath)));
         }
+
+        return Optional.empty();
     }
 
-    private void validateFileType() {
-        if (!FileType.forName(getCommandLineParams().getFileType())) {
-            throw new NotSupportedFileTypeException(getCommandLineParams().getFileType());
+    private Optional<SingleValidationResult> validateFileType() {
+        String fileType = getCommandLineParams().getFileType();
+        if (!FileType.forName(fileType)) {
+            return Optional.of(buildSingleValidationResultWithErrorStatus(String.format(ErrorMessages.FILE_TYPE_NOT_SUPPORTED, fileType)));
         }
+
+        return Optional.empty();
     }
 
-    SingleValidationResult buildSingleValidationResult() {
+    private SingleValidationResult buildSingleValidationResultWithErrorStatus(String errrorMessage) {
+        return buildSingleValidationResult(errrorMessage);
+    }
+
+    private SingleValidationResult buildSingleValidationResultWithPassStatus() {
+        return buildSingleValidationResult("");
+    }
+
+    private SingleValidationResult buildSingleValidationResult(String errorMessage) {
         SingleValidationResult singleValidationResult =
                 new SingleValidationResult(ValidationAuthor.FileContent, getCommandLineParams().getFileUUID());
-        if (validationError != null) {
-            singleValidationResult.setMessage(validationError);
+        if (!StringUtils.isEmpty(errorMessage)) {
+            singleValidationResult.setMessage(errorMessage);
             singleValidationResult.setValidationStatus(SingleValidationResultStatus.Error);
         } else {
             singleValidationResult.setValidationStatus(SingleValidationResultStatus.Pass);

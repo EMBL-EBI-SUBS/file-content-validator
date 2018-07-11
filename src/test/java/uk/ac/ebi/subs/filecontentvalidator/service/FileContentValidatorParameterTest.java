@@ -1,23 +1,23 @@
 package uk.ac.ebi.subs.filecontentvalidator.service;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
-import uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException;
-import uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException;
+import uk.ac.ebi.subs.validator.data.SingleValidationResult;
+import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
+import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
+
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.emptyIterable;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.doReturn;
-import static uk.ac.ebi.subs.filecontentvalidator.exception.FileNotFoundException.FILE_NOT_FOUND_BY_TARGET_PATH;
-import static uk.ac.ebi.subs.filecontentvalidator.exception.NotSupportedFileTypeException.FILE_TYPE_NOT_SUPPORTED;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {FileContentValidator.class, CommandLineParams.class })
@@ -25,9 +25,6 @@ public class FileContentValidatorParameterTest {
 
     @SpyBean
     private FileContentValidator fileContentValidator;
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     private static final String TEST_FILE_INVALID_PATH = "/invalid/path";
     private static final String TEST_FILE_PATH = "src/test/resources/test_file_for_file_content_validation.txt";
@@ -41,11 +38,15 @@ public class FileContentValidatorParameterTest {
 
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_INVALID_PATH, FILE_TYPE))
                 .when(this.fileContentValidator).getCommandLineParams();
+        String expectedValidationError = String.format(ErrorMessages.FILE_NOT_FOUND_BY_TARGET_PATH, TEST_FILE_INVALID_PATH);
 
-        this.thrown.expect(FileNotFoundException.class);
-        this.thrown.expectMessage(String.format(FILE_NOT_FOUND_BY_TARGET_PATH, TEST_FILE_INVALID_PATH));
+        List<SingleValidationResult> parameterErrors = fileContentValidator.validateParameters();
+        final SingleValidationResult singleValidationResult = parameterErrors.get(0);
 
-        fileContentValidator.validateParameters();
+        assertThat(parameterErrors, not(emptyIterable()));
+        assertThat(singleValidationResult.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
+        assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Error)));
+        assertThat(singleValidationResult.getMessage(), is(equalTo(expectedValidationError)));
     }
 
     @Test
@@ -53,10 +54,15 @@ public class FileContentValidatorParameterTest {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, NOT_SUPPORTED_FILE_TYPE))
                 .when(this.fileContentValidator).getCommandLineParams();
 
-        this.thrown.expect(NotSupportedFileTypeException.class);
-        this.thrown.expectMessage(String.format(FILE_TYPE_NOT_SUPPORTED, NOT_SUPPORTED_FILE_TYPE));
+        String expectedValidationError = String.format(ErrorMessages.FILE_TYPE_NOT_SUPPORTED, NOT_SUPPORTED_FILE_TYPE);
 
-        fileContentValidator.validateParameters();
+        List<SingleValidationResult> parameterErrors = fileContentValidator.validateParameters();
+        final SingleValidationResult singleValidationResult = parameterErrors.get(0);
+
+        assertThat(parameterErrors, not(emptyIterable()));
+        assertThat(singleValidationResult.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
+        assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Error)));
+        assertThat(singleValidationResult.getMessage(), is(equalTo(expectedValidationError)));
     }
 
     @Test
@@ -64,6 +70,6 @@ public class FileContentValidatorParameterTest {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE))
                 .when(this.fileContentValidator).getCommandLineParams();
 
-        assertThat(fileContentValidator.validateParameters(), is(equalTo(true)));
+        assertThat(fileContentValidator.validateParameters(), emptyIterable());
     }
 }
