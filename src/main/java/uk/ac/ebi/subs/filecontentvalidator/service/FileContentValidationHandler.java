@@ -12,7 +12,6 @@ import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,9 +33,7 @@ public class FileContentValidationHandler {
     private static final int CONTENT_VALIDATION_RESULT_VERSION = 1;
 
     public void handleFileContentValidation() throws IOException, InterruptedException {
-        List<SingleValidationResult> singleValidationResultList = new ArrayList<>();
-
-        singleValidationResultList.addAll(fileContentValidator.validateFileContent());
+        List<SingleValidationResult> singleValidationResultList = fileContentValidator.validateFileContent();
 
         SingleValidationResultsEnvelope singleValidationResultsEnvelope =
                 generateSingleValidationResultsEnvelope(singleValidationResultList);

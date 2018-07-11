@@ -1,6 +1,5 @@
 package uk.ac.ebi.subs.filecontentvalidator.service;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -18,7 +17,6 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -41,21 +39,19 @@ public class FileContentValidatorTest {
     private static final String FULL_ERROR_MESSAGE = "This is some text \nThis is another text \nERROR: %s";
     private static final String OK_MESSAGE = "OK";
 
-    @Before
-    public void setup() {
-        fileContentValidator.setValidationErrors(null);
-    }
-
     @Test
     public void whenFileExistsButItsContentsGotError_ThenValidationResultHasError() throws IOException, InterruptedException {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
         doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fileContentValidator).executeValidationAndGetResult();
 
-        fileContentValidator.validateFileContent();
-
-        List<String> validationError = fileContentValidator.getValidationErrors();
+        List<SingleValidationResult> validationError = fileContentValidator.validateFileContent();;
+        final SingleValidationResult singleValidationResult = validationError.get(0);
 
         assertThat(validationError, hasSize(1));
+
+        assertThat(singleValidationResult.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
+        assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Error)));
+        assertThat(singleValidationResult.getMessage(), is(equalTo(ERROR_MESSAGE)));
     }
 
     @Test
@@ -63,11 +59,12 @@ public class FileContentValidatorTest {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
         doReturn(OK_MESSAGE).when(this.fileContentValidator).executeValidationAndGetResult();
 
-        fileContentValidator.validateFileContent();
+        List<SingleValidationResult> validationResults = fileContentValidator.validateFileContent();;
+        final SingleValidationResult singleValidationResult = validationResults.get(0);
 
-        List<String> validationError = fileContentValidator.getValidationErrors();
-
-        assertThat(validationError, emptyIterable());
+        assertThat(validationResults, hasSize(1));
+        assertThat(singleValidationResult.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
+        assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Pass)));
     }
 
     @Test

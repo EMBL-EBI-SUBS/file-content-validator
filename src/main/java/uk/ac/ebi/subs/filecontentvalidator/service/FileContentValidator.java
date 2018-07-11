@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Data
 @Service
@@ -32,8 +32,6 @@ public class FileContentValidator {
     private static final String ERROR_RESULT_BEGINNING = "ERROR:";
     private static final String OK_RESULT_BEGINNING = "OK";
 
-    private List<String> validationErrors;
-
     @Value("${fileContentValidator.fastQ.validatorPath}")
     private String validatorPath;
 
@@ -42,9 +40,7 @@ public class FileContentValidator {
     }
 
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
-        List<SingleValidationResult> singleValidationResults = new ArrayList<>();
-
-        validateParameters();
+        List<SingleValidationResult> singleValidationResults = validateParameters();
 
         String output = executeValidationAndGetResult();
         String resultMessage;
@@ -53,13 +49,11 @@ public class FileContentValidator {
         if (last >= 0) {
             resultMessage = output.substring(last, output.length());
             if (resultMessage.contains(ERROR_RESULT_BEGINNING)) {
-                validationErrors.add(resultMessage.replace(ERROR_RESULT_BEGINNING, "").trim());
+                singleValidationResults.add(
+                        buildSingleValidationResultWithErrorStatus(
+                                resultMessage.replace(ERROR_RESULT_BEGINNING, "").trim()));
             }
         }
-
-        singleValidationResults = validationErrors.stream()
-                .map(this::buildSingleValidationResultWithErrorStatus)
-                .collect(Collectors.toList());
 
         if (singleValidationResults.size() == 0) {
             singleValidationResults.add(buildSingleValidationResultWithPassStatus());
@@ -94,33 +88,35 @@ public class FileContentValidator {
         return String.join(" ", validatorPath, getCommandLineParams().getFilePath());
     }
 
-    boolean validateParameters() {
-        initValidationErrors();
 
-        validateFileExistence();
+    List<SingleValidationResult> validateParameters() {
 
-        validateFileType();
+        List<SingleValidationResult> validationErrors = new ArrayList<>();
 
-        return validationErrors.size() == 0;
+        validateFileExistence().ifPresent(validationErrors::add);
+
+        validateFileType().ifPresent(validationErrors::add);
+
+        return validationErrors;
     }
 
-    private void initValidationErrors() {
-        this.validationErrors = new ArrayList<>();
-    }
-
-    private void validateFileExistence() {
+    private Optional<SingleValidationResult> validateFileExistence() {
         String filePath = getCommandLineParams().getFilePath();
         File file = new File(filePath);
         if(!file.exists() || file.isDirectory()) {
-            this.validationErrors.add(String.format(ErrorMessages.FILE_NOT_FOUND_BY_TARGET_PATH, filePath));
+            return Optional.of(buildSingleValidationResultWithErrorStatus(String.format(ErrorMessages.FILE_NOT_FOUND_BY_TARGET_PATH, filePath)));
         }
+
+        return Optional.empty();
     }
 
-    private void validateFileType() {
+    private Optional<SingleValidationResult> validateFileType() {
         String fileType = getCommandLineParams().getFileType();
         if (!FileType.forName(fileType)) {
-            this.validationErrors.add(String.format(ErrorMessages.FILE_TYPE_NOT_SUPPORTED, fileType));
+            return Optional.of(buildSingleValidationResultWithErrorStatus(String.format(ErrorMessages.FILE_TYPE_NOT_SUPPORTED, fileType)));
         }
+
+        return Optional.empty();
     }
 
     private SingleValidationResult buildSingleValidationResultWithErrorStatus(String errrorMessage) {
