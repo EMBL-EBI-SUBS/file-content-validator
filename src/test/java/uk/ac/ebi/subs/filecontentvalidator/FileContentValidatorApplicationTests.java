@@ -9,6 +9,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(value = {"fileContentValidator.validationResultUUID:1111",
+						"fileContentValidator.validationResultVersion:11",
 						"fileContentValidator.fileUUID:2222",
 						"fileContentValidator.filePath:src/test/resources/test_file_for_file_content_validation.txt",
 						"fileContentValidator.fileType:fastQ"})
