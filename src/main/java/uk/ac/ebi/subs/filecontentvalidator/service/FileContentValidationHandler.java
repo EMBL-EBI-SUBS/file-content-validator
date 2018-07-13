@@ -30,7 +30,6 @@ public class FileContentValidationHandler {
 
     private static final String EVENT_VALIDATION_SUCCESS = "validation.success";
     private static final String EVENT_VALIDATION_ERROR = "validation.error";
-    private static final int CONTENT_VALIDATION_RESULT_VERSION = 1;
 
     public void handleFileContentValidation() throws IOException, InterruptedException {
         List<SingleValidationResult> singleValidationResultList = fileContentValidator.validateFileContent();
@@ -44,7 +43,7 @@ public class FileContentValidationHandler {
     private SingleValidationResultsEnvelope generateSingleValidationResultsEnvelope(List<SingleValidationResult> singleValidationResults) {
         return new SingleValidationResultsEnvelope(
                 singleValidationResults,
-                CONTENT_VALIDATION_RESULT_VERSION,
+                Integer.parseInt(commandLineParams.getValidationResultVersion()),
                 commandLineParams.getValidationResultUUID(),
                 ValidationAuthor.FileContent
         );
