@@ -41,6 +41,9 @@ public class FileContentValidator {
         List<SingleValidationResult> singleValidationResults = validateParameters();
 
         String output = executeValidationAndGetResult().trim();
+
+        LOGGER.warn("File content validator result message: {}", output);
+
         String resultMessage = "";
 
         int last = output.lastIndexOf("\n");
@@ -72,8 +75,6 @@ public class FileContentValidator {
             validationResult = new java.util.Scanner(Runtime.getRuntime().exec(commandToExecuteValidation)
                     .getErrorStream()).useDelimiter("\\A");
         }
-
-        LOGGER.warn("File content validator result message: {}", validationResult.next());
 
         return validationResult.hasNext() ? validationResult.next() : "";
     }
