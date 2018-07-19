@@ -41,7 +41,7 @@ public class FileContentValidator {
         List<SingleValidationResult> singleValidationResults = validateParameters();
 
         String output = executeValidationAndGetResult().trim();
-        String resultMessage;
+        String resultMessage = "";
 
         int last = output.lastIndexOf("\n");
         if (last >= 0) {
