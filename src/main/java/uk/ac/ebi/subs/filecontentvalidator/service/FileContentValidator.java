@@ -70,6 +70,8 @@ public class FileContentValidator {
                     .getErrorStream()).useDelimiter("\\A");
         }
 
+        LOGGER.warn("File content validator result message corrupted: {}", validationResult.next());
+
         return validationResult.hasNext() ? validationResult.next() : "";
     }
 
