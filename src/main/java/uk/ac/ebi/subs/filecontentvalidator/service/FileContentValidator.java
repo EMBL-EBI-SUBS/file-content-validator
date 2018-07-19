@@ -53,6 +53,7 @@ public class FileContentValidator {
                 singleValidationResults.add(
                         buildSingleValidationResultWithErrorStatus(
                                 resultMessage.replace(ERROR_RESULT_BEGINNING, "").trim()));
+                LOGGER.info("Error has been added to the SingleValidationResult: {}, list size: {}", resultMessage, singleValidationResults.size());
             }
         }
 
