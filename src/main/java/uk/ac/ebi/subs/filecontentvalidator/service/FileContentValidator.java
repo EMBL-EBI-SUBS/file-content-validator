@@ -53,6 +53,9 @@ public class FileContentValidator {
             }
         }
 
+        LOGGER.warn("File content validator result message after parsing: {}", resultMessage);
+        LOGGER.warn("Last position: {}", last);
+
         if (singleValidationResults.size() == 0) {
             singleValidationResults.add(buildSingleValidationResultWithPassStatus());
         }
@@ -70,7 +73,7 @@ public class FileContentValidator {
                     .getErrorStream()).useDelimiter("\\A");
         }
 
-        LOGGER.warn("File content validator result message corrupted: {}", validationResult.next());
+        LOGGER.warn("File content validator result message: {}", validationResult.next());
 
         return validationResult.hasNext() ? validationResult.next() : "";
     }
