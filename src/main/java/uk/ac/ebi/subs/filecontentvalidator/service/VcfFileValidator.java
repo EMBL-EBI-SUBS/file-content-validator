@@ -1,9 +1,11 @@
 package uk.ac.ebi.subs.filecontentvalidator.service;
 
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 
@@ -16,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+@RequiredArgsConstructor
+@Component
 public class VcfFileValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VcfFileValidator.class);
