@@ -1,5 +1,7 @@
 package uk.ac.ebi.subs.filecontentvalidator.service;
 
+import com.rabbitmq.client.Command;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
@@ -11,19 +13,26 @@ import uk.ac.ebi.subs.validator.data.SingleValidationResultsEnvelope;
 import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Getter
 @RequiredArgsConstructor
 public class FileContentValidationHandler {
 
     @NonNull
-    private FileContentValidator fileContentValidator;
+    private FastqFileValidator fastqFileValidator;
 
     @NonNull
     private CommandLineParams commandLineParams;
+
+    @NonNull
+    private CommandLineParamChecker commandLineParamChecker;
 
     @NonNull
     private RabbitMessagingTemplate rabbitMessagingTemplate;
@@ -32,12 +41,27 @@ public class FileContentValidationHandler {
     private static final String EVENT_VALIDATION_ERROR = "validation.error";
 
     public void handleFileContentValidation() throws IOException, InterruptedException {
-        List<SingleValidationResult> singleValidationResultList = fileContentValidator.validateFileContent();
+        List<SingleValidationResult> singleValidationResultList = commandLineParamChecker.validateParameters(commandLineParams);
+
+        if (singleValidationResultList.isEmpty()){
+            singleValidationResultList = doValidation();
+        }
+
 
         SingleValidationResultsEnvelope singleValidationResultsEnvelope =
                 generateSingleValidationResultsEnvelope(singleValidationResultList);
 
         sendValidationMessageToAggregator(singleValidationResultsEnvelope);
+    }
+
+    private List<SingleValidationResult> doValidation() throws IOException, InterruptedException {
+        FileType fileType = commandLineParams.getFileTypeEnum();
+
+        if (fileType == FileType.FASTQ){
+            return fastqFileValidator.validateFileContent();
+        }
+
+        throw new IllegalArgumentException("we have not implemented a handler for "+fileType);
     }
 
     private SingleValidationResultsEnvelope generateSingleValidationResultsEnvelope(List<SingleValidationResult> singleValidationResults) {
@@ -57,6 +81,7 @@ public class FileContentValidationHandler {
             rabbitMessagingTemplate.convertAndSend(Exchanges.SUBMISSIONS, EVENT_VALIDATION_SUCCESS, envelope);
         }
     }
+
 
 
 }
