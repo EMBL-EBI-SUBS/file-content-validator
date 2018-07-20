@@ -36,10 +36,6 @@ public class FastqFileValidator {
     @Value("${fileContentValidator.fastQ.validatorPath}")
     private String validatorPath;
 
-    CommandLineParams getCommandLineParams() {
-        return this.commandLineParams;
-    }
-
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
         List<SingleValidationResult> singleValidationResults = new ArrayList<>();
 

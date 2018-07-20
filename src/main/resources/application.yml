@@ -1,3 +1,5 @@
 fileContentValidator:
   fastQ:
     validatorPath: /path/to/fastq/validator
+  vcf:
+    validatorPath: /path/to/vcf/validator

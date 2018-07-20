@@ -18,22 +18,30 @@ public class SingleValidationResultBuilder {
     @NonNull
     private CommandLineParams commandLineParams;
 
-    public SingleValidationResult buildSingleValidationResultWithErrorStatus(String errrorMessage) {
-        return buildSingleValidationResult(errrorMessage);
+    public SingleValidationResult buildSingleValidationResultWithErrorStatus(String message) {
+        SingleValidationResult svr = buildSingleValidationResult(message);
+        svr.setValidationStatus(SingleValidationResultStatus.Error);
+        return svr;
+    }
+
+    public SingleValidationResult buildSingleValidationResultWithWarningStatus(String message){
+        SingleValidationResult svr = buildSingleValidationResult(message);
+        svr.setValidationStatus(SingleValidationResultStatus.Warning);
+        return svr;
     }
 
     public SingleValidationResult buildSingleValidationResultWithPassStatus() {
-        return buildSingleValidationResult("");
+        SingleValidationResult svr = buildSingleValidationResult("");
+        svr.setValidationStatus(SingleValidationResultStatus.Pass);
+        return svr;
     }
 
-    public SingleValidationResult buildSingleValidationResult(String errorMessage) {
+    private SingleValidationResult buildSingleValidationResult(String errorMessage) {
         SingleValidationResult singleValidationResult =
                 new SingleValidationResult(ValidationAuthor.FileContent, getCommandLineParams().getFileUUID());
+
         if (!StringUtils.isEmpty(errorMessage)) {
             singleValidationResult.setMessage(errorMessage);
-            singleValidationResult.setValidationStatus(SingleValidationResultStatus.Error);
-        } else {
-            singleValidationResult.setValidationStatus(SingleValidationResultStatus.Pass);
         }
 
         return singleValidationResult;

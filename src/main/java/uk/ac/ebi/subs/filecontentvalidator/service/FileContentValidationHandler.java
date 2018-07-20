@@ -29,6 +29,9 @@ public class FileContentValidationHandler {
     private FastqFileValidator fastqFileValidator;
 
     @NonNull
+    private VcfFileValidator vcfFileValidator;
+
+    @NonNull
     private CommandLineParams commandLineParams;
 
     @NonNull
@@ -59,6 +62,9 @@ public class FileContentValidationHandler {
 
         if (fileType == FileType.FASTQ){
             return fastqFileValidator.validateFileContent();
+        }
+        if (fileType == FileType.VCF){
+            return vcfFileValidator.validateFileContent();
         }
 
         throw new IllegalArgumentException("we have not implemented a handler for "+fileType);
