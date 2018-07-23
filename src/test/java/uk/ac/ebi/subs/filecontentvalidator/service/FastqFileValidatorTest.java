@@ -22,11 +22,11 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.doReturn;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {FileContentValidator.class, CommandLineParams.class })
-public class FileContentValidatorTest {
+@SpringBootTest(classes = {FastqFileValidator.class, SingleValidationResultBuilder.class, CommandLineParams.class })
+public class FastqFileValidatorTest {
 
     @SpyBean
-    private FileContentValidator fileContentValidator;
+    private FastqFileValidator fastqFileValidator;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -41,10 +41,10 @@ public class FileContentValidatorTest {
 
     @Test
     public void whenFileExistsButItsContentsGotError_ThenValidationResultHasError() throws IOException, InterruptedException {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
-        doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fileContentValidator).executeValidationAndGetResult();
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fastqFileValidator).getCommandLineParams();
+        doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fastqFileValidator).executeValidationAndGetResult();
 
-        List<SingleValidationResult> validationError = fileContentValidator.validateFileContent();;
+        List<SingleValidationResult> validationError = fastqFileValidator.validateFileContent();;
         final SingleValidationResult singleValidationResult = validationError.get(0);
 
         assertThat(validationError, hasSize(1));
@@ -56,10 +56,10 @@ public class FileContentValidatorTest {
 
     @Test
     public void whenFileExistsAndItsContentsCorrect_ThenValidationResultHasOK() throws IOException, InterruptedException {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
-        doReturn(OK_MESSAGE).when(this.fileContentValidator).executeValidationAndGetResult();
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fastqFileValidator).getCommandLineParams();
+        doReturn(OK_MESSAGE).when(this.fastqFileValidator).executeValidationAndGetResult();
 
-        List<SingleValidationResult> validationResults = fileContentValidator.validateFileContent();;
+        List<SingleValidationResult> validationResults = fastqFileValidator.validateFileContent();;
         final SingleValidationResult singleValidationResult = validationResults.get(0);
 
         assertThat(validationResults, hasSize(1));
@@ -69,10 +69,10 @@ public class FileContentValidatorTest {
 
     @Test
     public void whenFileExistsButItsContentsGotError_ThenSingleValidationResultContainsTheError() throws IOException, InterruptedException {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
-        doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fileContentValidator).executeValidationAndGetResult();
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fastqFileValidator).getCommandLineParams();
+        doReturn(String.format(FULL_ERROR_MESSAGE, ERROR_MESSAGE)).when(this.fastqFileValidator).executeValidationAndGetResult();
 
-        List<SingleValidationResult> singleValidationResults = fileContentValidator.validateFileContent();
+        List<SingleValidationResult> singleValidationResults = fastqFileValidator.validateFileContent();
 
         assertThat(singleValidationResults, hasSize(1));
 
@@ -85,10 +85,10 @@ public class FileContentValidatorTest {
 
     @Test
     public void whenFileExistsAndItsContentsCorrect_ThenSingleValidationResultContainsPassedStatus() throws IOException, InterruptedException {
-        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fileContentValidator).getCommandLineParams();
-        doReturn(OK_MESSAGE).when(this.fileContentValidator).executeValidationAndGetResult();
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.fastqFileValidator).getCommandLineParams();
+        doReturn(OK_MESSAGE).when(this.fastqFileValidator).executeValidationAndGetResult();
 
-        List<SingleValidationResult> singleValidationResults = fileContentValidator.validateFileContent();
+        List<SingleValidationResult> singleValidationResults = fastqFileValidator.validateFileContent();
 
         assertThat(singleValidationResults, hasSize(1));
 

@@ -1,0 +1,4 @@
+According to the VCF specification, the input file is not valid
+Error: Duplicated variant 8:9419327:>CT found. This occurs 2 time(s), first time in line 10000042.
+Warning: Reference and alternate alleles do not share the first nucleotide. This occurs 4 time(s), first time in line 10104086.
+Error: Duplicated variant 9:55657600:>GC found. This occurs 2 time(s), first time in line 11743106.
