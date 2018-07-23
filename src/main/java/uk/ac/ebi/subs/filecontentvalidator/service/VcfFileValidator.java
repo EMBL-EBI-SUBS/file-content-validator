@@ -2,6 +2,7 @@ package uk.ac.ebi.subs.filecontentvalidator.service;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,10 +32,11 @@ public class VcfFileValidator {
     private SingleValidationResultBuilder singleValidationResultBuilder;
 
     @Value("${fileContentValidator.vcf.validatorPath}")
+    @Setter
     private String validatorPath;
 
-    private static final String ERROR_PREFIX = "Error:";
-    private static final String WARNING_PREFIX = "Warning:";
+    private static final String ERROR_PREFIX = "Error: ";
+    private static final String WARNING_PREFIX = "Warning: ";
 
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
 
@@ -98,14 +100,17 @@ public class VcfFileValidator {
     }
 
     void executeVcfValidator(Path outputDirectory) throws IOException {
-        String command = String.join(" ",
-                validatorPath,
-                "-i", commandLineParams.getFilePath(),
-                "-o", outputDirectory.toString(),
-                "-l", "error",
-                "-r", "summary"
-        );
+        String command = vcfValidatorCommandLine(outputDirectory);
 
         Runtime.getRuntime().exec(command);
+    }
+
+    String vcfValidatorCommandLine(Path outputDirectory) {
+        return String.join(" ",
+                    validatorPath,
+                    "-i", commandLineParams.getFilePath(),
+                    "-o", outputDirectory.toString(),
+                    "-r", "summary"
+            );
     }
 }
