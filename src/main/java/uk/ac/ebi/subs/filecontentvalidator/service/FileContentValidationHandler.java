@@ -16,6 +16,7 @@ import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,6 +40,9 @@ public class FileContentValidationHandler {
 
     @NonNull
     private RabbitMessagingTemplate rabbitMessagingTemplate;
+
+    @NonNull
+    private SingleValidationResultBuilder singleValidationResultBuilder;
 
     private static final String EVENT_VALIDATION_SUCCESS = "validation.success";
     private static final String EVENT_VALIDATION_ERROR = "validation.error";
@@ -67,7 +71,8 @@ public class FileContentValidationHandler {
             return vcfFileValidator.validateFileContent();
         }
 
-        throw new IllegalArgumentException("we have not implemented a handler for "+fileType);
+        //default approach for unimplemented validation
+        return Arrays.asList(singleValidationResultBuilder.buildSingleValidationResultWithPassStatus());
     }
 
     private SingleValidationResultsEnvelope generateSingleValidationResultsEnvelope(List<SingleValidationResult> singleValidationResults) {
