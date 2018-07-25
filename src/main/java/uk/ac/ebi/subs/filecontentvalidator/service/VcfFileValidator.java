@@ -41,6 +41,8 @@ public class VcfFileValidator {
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
 
         Path outputDirectory = Files.createTempDirectory("usi-vcf-validation");
+        LOGGER.info("output will be written to {}",outputDirectory);
+
         List<SingleValidationResult> results = null;
 
         try {
@@ -86,12 +88,14 @@ public class VcfFileValidator {
         if (results.isEmpty()){
             results.add(singleValidationResultBuilder.buildSingleValidationResultWithPassStatus());
         }
+        LOGGER.info("results: {}",results);
+
         return results;
     }
 
     File findOutputFile(Path outputDirectory) {
         File[] outputFiles = outputDirectory.toFile().listFiles();
-
+        LOGGER.info("contents of output dir: {}",outputFiles);
         if (outputFiles.length != 1){
             throw new IllegalStateException();
         }
@@ -101,7 +105,7 @@ public class VcfFileValidator {
 
     void executeVcfValidator(Path outputDirectory) throws IOException {
         String command = vcfValidatorCommandLine(outputDirectory);
-
+        LOGGER.info("command: {}",command);
         Runtime.getRuntime().exec(command);
     }
 
