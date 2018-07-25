@@ -19,6 +19,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 public class VcfFileValidatorTest {
@@ -57,7 +58,7 @@ public class VcfFileValidatorTest {
         Path outputDirectory = Files.createTempDirectory("file_finder_test");
         outputDirectory.toFile().deleteOnExit();
 
-        Path outputFilePath = outputDirectory.resolve("foo_bar.summary.txt");
+        Path outputFilePath = outputDirectory.resolve("testFile.vcf.gz.errors_summary.1532535397331.txt");
         Files.createFile(outputFilePath);
         outputFilePath.toFile().deleteOnExit();
 
@@ -68,6 +69,15 @@ public class VcfFileValidatorTest {
 
         expectedFile.delete();
         outputDirectory.toFile().delete();
+    }
+
+    @Test
+    public void test_outputDir_is_a_directory() throws IOException {
+        Path outputDirectory = vcfFileValidator.createOutputDir();
+        File outputDirAsFile = outputDirectory.toFile();
+
+        assertTrue(outputDirAsFile.isDirectory());
+
     }
 
     @Test

@@ -40,26 +40,24 @@ public class VcfFileValidator {
 
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
 
-        Path outputDirectory = Files.createTempDirectory("usi-vcf-validation");
-        LOGGER.info("output will be written to {}",outputDirectory);
+        Path outputDirectory = createOutputDir();
+        LOGGER.info("output will be written to {}", outputDirectory);
 
-        List<SingleValidationResult> results = null;
+        executeVcfValidator(outputDirectory);
 
-        try {
-            executeVcfValidator(outputDirectory);
+        File summaryFile = findOutputFile(outputDirectory);
 
-            File summaryFile = findOutputFile(outputDirectory);
+        List<SingleValidationResult> results = parseOutputFile(summaryFile);
 
-            results = parseOutputFile(summaryFile);
-
-            summaryFile.delete();
-        }
-        finally {
-            Files.delete(outputDirectory);
-
-        }
+        summaryFile.delete();
 
         return results;
+    }
+
+    Path createOutputDir() throws IOException {
+        Path tempDirectory = Files.createTempDirectory("usi-vcf-validation");
+        tempDirectory.toFile().deleteOnExit();
+        return tempDirectory;
     }
 
     List<SingleValidationResult> parseOutputFile(File summaryFile) throws FileNotFoundException {
@@ -68,35 +66,35 @@ public class VcfFileValidator {
         Scanner scanner = new Scanner(summaryFile);
         scanner.useDelimiter("\n");
 
-        while (scanner.hasNext()){
+        while (scanner.hasNext()) {
             String line = scanner.nextLine();
 
-            if (line.startsWith(ERROR_PREFIX)){
-                String trimmedMessage = line.replace(ERROR_PREFIX,"");
+            if (line.startsWith(ERROR_PREFIX)) {
+                String trimmedMessage = line.replace(ERROR_PREFIX, "");
                 results.add(
                         singleValidationResultBuilder.buildSingleValidationResultWithErrorStatus(trimmedMessage)
                 );
             }
-            if (line.startsWith(WARNING_PREFIX)){
-                String trimmedMessage = line.replace(WARNING_PREFIX,"");
+            if (line.startsWith(WARNING_PREFIX)) {
+                String trimmedMessage = line.replace(WARNING_PREFIX, "");
                 results.add(
-                    singleValidationResultBuilder.buildSingleValidationResultWithWarningStatus(trimmedMessage)
+                        singleValidationResultBuilder.buildSingleValidationResultWithWarningStatus(trimmedMessage)
                 );
             }
         }
 
-        if (results.isEmpty()){
+        if (results.isEmpty()) {
             results.add(singleValidationResultBuilder.buildSingleValidationResultWithPassStatus());
         }
-        LOGGER.info("results: {}",results);
+        LOGGER.info("results: {}", results);
 
         return results;
     }
 
     File findOutputFile(Path outputDirectory) {
         File[] outputFiles = outputDirectory.toFile().listFiles();
-        LOGGER.info("contents of output dir: {}",outputFiles);
-        if (outputFiles.length != 1){
+        LOGGER.info("contents of output dir: {}", outputFiles);
+        if (outputFiles.length != 1) {
             throw new IllegalStateException();
         }
 
@@ -105,16 +103,16 @@ public class VcfFileValidator {
 
     void executeVcfValidator(Path outputDirectory) throws IOException {
         String command = vcfValidatorCommandLine(outputDirectory);
-        LOGGER.info("command: {}",command);
+        LOGGER.info("command: {}", command);
         Runtime.getRuntime().exec(command);
     }
 
     String vcfValidatorCommandLine(Path outputDirectory) {
         return String.join(" ",
-                    validatorPath,
-                    "-i", commandLineParams.getFilePath(),
-                    "-o", outputDirectory.toString(),
-                    "-r", "summary"
-            );
+                validatorPath,
+                "-i", commandLineParams.getFilePath(),
+                "-o", outputDirectory.toString(),
+                "-r", "summary"
+        );
     }
 }
