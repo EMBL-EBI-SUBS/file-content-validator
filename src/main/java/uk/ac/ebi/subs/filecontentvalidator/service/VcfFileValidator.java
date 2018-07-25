@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -41,8 +43,7 @@ public class VcfFileValidator {
 
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
 
-        //Path outputDirectory = createOutputDir();
-        Path outputDirectory = Paths.get("/homes/sub_adm/test_out");
+        Path outputDirectory = createOutputDir();
         LOGGER.info("output will be written to {}", outputDirectory);
 
         executeVcfValidator(outputDirectory);
@@ -51,13 +52,15 @@ public class VcfFileValidator {
 
         List<SingleValidationResult> results = parseOutputFile(summaryFile);
 
-        //summaryFile.delete();
+        summaryFile.delete();
 
         return results;
     }
 
     Path createOutputDir() throws IOException {
         Path tempDirectory = Files.createTempDirectory("usi-vcf-validation");
+        PosixFileAttributeView attributes = Files.getFileAttributeView(tempDirectory, PosixFileAttributeView.class);
+        LOGGER.info("created dir: {} with attributes: {}",tempDirectory,attributes.readAttributes().permissions());
         tempDirectory.toFile().deleteOnExit();
         return tempDirectory;
     }
