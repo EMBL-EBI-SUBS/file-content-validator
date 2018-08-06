@@ -50,6 +50,7 @@ public class VcfFileValidatorTest {
                 "-r summary"
         );
         String actualCommandLine = vcfFileValidator.vcfValidatorCommandLine(outputPath);
+
         assertThat(actualCommandLine, is(equalTo(expectedCommandLine)));
     }
 

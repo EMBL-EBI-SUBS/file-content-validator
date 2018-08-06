@@ -15,8 +15,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,9 +42,13 @@ public class VcfFileValidator {
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
 
         Path outputDirectory = createOutputDir();
-        LOGGER.info("output will be written to {}", outputDirectory);
+        LOGGER.debug("output will be written to {}", outputDirectory);
 
-        executeVcfValidator(outputDirectory);
+        Scanner processOutputScanner = executeVcfValidator(outputDirectory);
+
+        while (processOutputScanner.hasNext()){
+            LOGGER.debug("VCF validator output: {}",processOutputScanner.next());
+        }
 
         File summaryFile = findOutputFile(outputDirectory);
 
@@ -60,7 +62,7 @@ public class VcfFileValidator {
     Path createOutputDir() throws IOException {
         Path tempDirectory = Files.createTempDirectory("usi-vcf-validation");
         PosixFileAttributeView attributes = Files.getFileAttributeView(tempDirectory, PosixFileAttributeView.class);
-        LOGGER.info("created dir: {} with attributes: {}",tempDirectory,attributes.readAttributes().permissions());
+        LOGGER.debug("created dir: {} with attributes: {}", tempDirectory, attributes.readAttributes().permissions());
         tempDirectory.toFile().deleteOnExit();
         return tempDirectory;
     }
@@ -91,14 +93,14 @@ public class VcfFileValidator {
         if (results.isEmpty()) {
             results.add(singleValidationResultBuilder.buildSingleValidationResultWithPassStatus());
         }
-        LOGGER.info("results: {}", results);
+        LOGGER.debug("results: {}", results);
 
         return results;
     }
 
     File findOutputFile(Path outputDirectory) {
         File[] outputFiles = outputDirectory.toFile().listFiles();
-        LOGGER.info("contents of output dir: {}", outputFiles);
+        LOGGER.debug("contents of output dir: {}", outputFiles);
         if (outputFiles.length != 1) {
             throw new IllegalStateException();
         }
@@ -106,10 +108,13 @@ public class VcfFileValidator {
         return outputFiles[0];
     }
 
-    void executeVcfValidator(Path outputDirectory) throws IOException {
+    Scanner executeVcfValidator(Path outputDirectory) throws IOException, InterruptedException {
         String command = vcfValidatorCommandLine(outputDirectory);
-        LOGGER.info("command: {}", command);
-        Runtime.getRuntime().exec(command);
+        LOGGER.debug("command: {}", command);
+        Process process = Runtime.getRuntime().exec(command);
+        process.waitFor();
+        Scanner scanner = new Scanner(process.getInputStream()).useDelimiter("\n");
+        return scanner;
     }
 
     String vcfValidatorCommandLine(Path outputDirectory) {
