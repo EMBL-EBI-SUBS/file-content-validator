@@ -108,10 +108,11 @@ public class VcfFileValidator {
         return outputFiles[0];
     }
 
-    Scanner executeVcfValidator(Path outputDirectory) throws IOException {
+    Scanner executeVcfValidator(Path outputDirectory) throws IOException, InterruptedException {
         String command = vcfValidatorCommandLine(outputDirectory);
         LOGGER.info("command: {}", command);
         Process process = Runtime.getRuntime().exec(command);
+        process.waitFor();
         Scanner scanner = new Scanner(process.getInputStream()).useDelimiter("\n");
         return scanner;
     }
