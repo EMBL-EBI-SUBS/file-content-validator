@@ -47,7 +47,7 @@ public class VcfFileValidator {
         Scanner processOutputScanner = executeVcfValidator(outputDirectory);
 
         while (processOutputScanner.hasNext()){
-            LOGGER.info("VCF validator output: {}",processOutputScanner.next());
+            LOGGER.debug("VCF validator output: {}",processOutputScanner.next());
         }
 
         File summaryFile = findOutputFile(outputDirectory);
@@ -62,7 +62,7 @@ public class VcfFileValidator {
     Path createOutputDir() throws IOException {
         Path tempDirectory = Files.createTempDirectory("usi-vcf-validation");
         PosixFileAttributeView attributes = Files.getFileAttributeView(tempDirectory, PosixFileAttributeView.class);
-        LOGGER.info("created dir: {} with attributes: {}", tempDirectory, attributes.readAttributes().permissions());
+        LOGGER.debug("created dir: {} with attributes: {}", tempDirectory, attributes.readAttributes().permissions());
         tempDirectory.toFile().deleteOnExit();
         return tempDirectory;
     }
@@ -93,14 +93,14 @@ public class VcfFileValidator {
         if (results.isEmpty()) {
             results.add(singleValidationResultBuilder.buildSingleValidationResultWithPassStatus());
         }
-        LOGGER.info("results: {}", results);
+        LOGGER.debug("results: {}", results);
 
         return results;
     }
 
     File findOutputFile(Path outputDirectory) {
         File[] outputFiles = outputDirectory.toFile().listFiles();
-        LOGGER.info("contents of output dir: {}", outputFiles);
+        LOGGER.debug("contents of output dir: {}", outputFiles);
         if (outputFiles.length != 1) {
             throw new IllegalStateException();
         }
@@ -110,7 +110,7 @@ public class VcfFileValidator {
 
     Scanner executeVcfValidator(Path outputDirectory) throws IOException, InterruptedException {
         String command = vcfValidatorCommandLine(outputDirectory);
-        LOGGER.info("command: {}", command);
+        LOGGER.debug("command: {}", command);
         Process process = Runtime.getRuntime().exec(command);
         process.waitFor();
         Scanner scanner = new Scanner(process.getInputStream()).useDelimiter("\n");
