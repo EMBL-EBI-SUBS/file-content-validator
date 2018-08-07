@@ -1,4 +1,4 @@
-package uk.ac.ebi.subs.filecontentvalidator.service;
+package uk.ac.ebi.subs.filecontentvalidator.validators;
 
 import lombok.Data;
 import lombok.NonNull;
@@ -6,21 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
+import uk.ac.ebi.subs.filecontentvalidator.service.SingleValidationResultBuilder;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
-import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
-import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 @Service
-public class FastqFileValidator {
+public class FastqFileValidator implements FileValidator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FastqFileValidator.class);
 
@@ -36,6 +32,7 @@ public class FastqFileValidator {
     @Value("${fileContentValidator.fastQ.validatorPath}")
     private String validatorPath;
 
+    @Override
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
         List<SingleValidationResult> singleValidationResults = new ArrayList<>();
 
