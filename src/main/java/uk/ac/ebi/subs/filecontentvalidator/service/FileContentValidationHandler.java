@@ -6,10 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
-import uk.ac.ebi.subs.filecontentvalidator.validators.FastqFileValidator;
 import uk.ac.ebi.subs.filecontentvalidator.validators.FileValidator;
 import uk.ac.ebi.subs.filecontentvalidator.validators.ValidatorSupplier;
-import uk.ac.ebi.subs.filecontentvalidator.validators.VcfFileValidator;
 import uk.ac.ebi.subs.messaging.Exchanges;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 import uk.ac.ebi.subs.validator.data.SingleValidationResultsEnvelope;
@@ -25,12 +23,6 @@ import java.util.stream.Collectors;
 @Getter
 @RequiredArgsConstructor
 public class FileContentValidationHandler {
-
-    @NonNull
-    private FastqFileValidator fastqFileValidator;
-
-    @NonNull
-    private VcfFileValidator vcfFileValidator;
 
     @NonNull
     private CommandLineParams commandLineParams;
