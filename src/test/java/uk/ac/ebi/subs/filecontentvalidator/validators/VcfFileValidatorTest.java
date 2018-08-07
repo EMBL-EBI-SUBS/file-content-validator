@@ -1,10 +1,12 @@
-package uk.ac.ebi.subs.filecontentvalidator.service;
+package uk.ac.ebi.subs.filecontentvalidator.validators;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
+import uk.ac.ebi.subs.filecontentvalidator.service.CommandLineParamBuilder;
+import uk.ac.ebi.subs.filecontentvalidator.service.SingleValidationResultBuilder;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 
 import java.io.File;
@@ -63,7 +65,7 @@ public class VcfFileValidatorTest {
         Files.createFile(outputFilePath);
         outputFilePath.toFile().deleteOnExit();
 
-        File actualFile = vcfFileValidator.findOutputFile(outputDirectory);
+        File actualFile = ValidatorFileUtils.findOutputFile(outputDirectory);
         File expectedFile = outputFilePath.toFile();
 
         assertThat(actualFile, is(equalTo(expectedFile)));
@@ -74,7 +76,7 @@ public class VcfFileValidatorTest {
 
     @Test
     public void test_outputDir_is_a_directory() throws IOException {
-        Path outputDirectory = vcfFileValidator.createOutputDir();
+        Path outputDirectory = ValidatorFileUtils.createOutputDir(VcfFileValidator.FOLDER_PREFIX_FOR_USI_VCF_VALIDATION);
         File outputDirAsFile = outputDirectory.toFile();
 
         assertTrue(outputDirAsFile.isDirectory());

@@ -1,24 +1,24 @@
 package uk.ac.ebi.subs.filecontentvalidator.service;
 
-import com.rabbitmq.client.Command;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
+import uk.ac.ebi.subs.filecontentvalidator.validators.FastqFileValidator;
+import uk.ac.ebi.subs.filecontentvalidator.validators.FileValidator;
+import uk.ac.ebi.subs.filecontentvalidator.validators.ValidatorSupplier;
+import uk.ac.ebi.subs.filecontentvalidator.validators.VcfFileValidator;
 import uk.ac.ebi.subs.messaging.Exchanges;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 import uk.ac.ebi.subs.validator.data.SingleValidationResultsEnvelope;
 import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +44,9 @@ public class FileContentValidationHandler {
     @NonNull
     private SingleValidationResultBuilder singleValidationResultBuilder;
 
+    @NonNull
+    private ValidatorSupplier validatorSupplier;
+
     private static final String EVENT_VALIDATION_SUCCESS = "validation.success";
     private static final String EVENT_VALIDATION_ERROR = "validation.error";
 
@@ -64,15 +67,14 @@ public class FileContentValidationHandler {
     private List<SingleValidationResult> doValidation() throws IOException, InterruptedException {
         FileType fileType = commandLineParams.getFileTypeEnum();
 
-        if (fileType == FileType.FASTQ){
-            return fastqFileValidator.validateFileContent();
-        }
-        if (fileType == FileType.VCF){
-            return vcfFileValidator.validateFileContent();
+        FileValidator fileValidator = validatorSupplier.supplyFileValidator(fileType);
+
+        if (fileValidator != null) {
+            return fileValidator.validateFileContent();
         }
 
         //default approach for unimplemented validation
-        return Arrays.asList(singleValidationResultBuilder.buildSingleValidationResultWithPassStatus());
+        return Collections.singletonList(singleValidationResultBuilder.buildSingleValidationResultWithPassStatus());
     }
 
     private SingleValidationResultsEnvelope generateSingleValidationResultsEnvelope(List<SingleValidationResult> singleValidationResults) {
