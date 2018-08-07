@@ -16,12 +16,12 @@ import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +52,8 @@ public class BamCramFileValidatorTest {
     private static final String FILE_UUID = "9999-aabbcc-223344";
     private static final String FILE_TYPE = "bam";
     private static final String ERROR_MESSAGE = "2.quickcheck.badheader.bam caused an error whilst reading its header.";
+    private static final String INVALID_CODE_LENGTHS_SET_ERROR_MESSAGE = "[E::inflate_gzip_block] Inflate operation failed: invalid code lengths set";
+    private static final String SAMVIEW_BAD_HEADER_BAM_ERROR_MESSAGE = "[main_samview] fail to read the header from \"2.quickcheck.badheader.bam\".";
 
     private static final String EXE_PATH = "/path/to/bamcram/validator";
     private static final String OUTPUT_DIR = "/fake/out";
@@ -71,12 +73,12 @@ public class BamCramFileValidatorTest {
                 "quickcheck -vv", TEST_FILE_PATH,
                 "2> ", OUTPUT_DIR
         );
-        String actualCommandLine = bamCramFileValidator.validatorCommandLine(outputPath);
+        String actualCommandLine = bamCramFileValidator.quickCheckValidationCommand(outputPath);
         assertThat(actualCommandLine, is(equalTo(expectedCommandLine)));
     }
 
     @Test
-    public void test_report_parsing_with_errors() throws FileNotFoundException, IOException {
+    public void test_report_parsing_with_errors() throws IOException {
         bamCramFileValidator = new BamCramFileValidator(commandLineParams, singleValidationResultBuilder);
 
         List<String> fileContent = Arrays.asList(
@@ -96,7 +98,7 @@ public class BamCramFileValidatorTest {
     }
 
     @Test
-    public void test_report_parsing_with_no_problems() throws FileNotFoundException, IOException {
+    public void test_report_parsing_with_no_problems() throws IOException {
         bamCramFileValidator = new BamCramFileValidator(commandLineParams, singleValidationResultBuilder);
 
         List<String> fileContent = Collections.singletonList(
@@ -105,18 +107,14 @@ public class BamCramFileValidatorTest {
 
         File reportFile = createTestResources(fileContent, "bam_report_with_no_problems.txt");
 
-        List<SingleValidationResult> expectedResults = Collections.singletonList(
-                singleValidationResultBuilder.buildSingleValidationResultWithPassStatus()
-        );
-
         List<SingleValidationResult> actualResults = bamCramFileValidator.parseOutputFile(reportFile);
-        assertThat(actualResults, is(equalTo(expectedResults)));
+        assertThat(actualResults.size(), is(0));
     }
 
     @Test
-    public void whenFileExistsButItsContentsGotError_ThenValidationResultHasError() throws IOException, InterruptedException {
+    public void whenFileExistsButItsContentsGotErrorByQuickCheckValidation_ThenValidationResultHasError() throws IOException, InterruptedException {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.bamCramFileValidator).getCommandLineParams();
-        doNothing().when(this.bamCramFileValidator).executeValidation(any(Path.class));
+        doNothing().when(this.bamCramFileValidator).executeValidation(any(String.class));
         doNothing().when(this.bamCramFileValidator).deleteTemporaryFile(any(File.class));
 
         List<String> fileContent = Arrays.asList(
@@ -141,7 +139,7 @@ public class BamCramFileValidatorTest {
     @Test
     public void whenFileExistsAndItsContentsCorrect_ThenValidationResultHasOK() throws IOException, InterruptedException {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.bamCramFileValidator).getCommandLineParams();
-        doNothing().when(this.bamCramFileValidator).executeValidation(any(Path.class));
+        doNothing().when(this.bamCramFileValidator).executeValidation(any(String.class));
         doNothing().when(this.bamCramFileValidator).deleteTemporaryFile(any(File.class));
 
         List<String> fileContent = Collections.singletonList(
@@ -160,9 +158,40 @@ public class BamCramFileValidatorTest {
         assertThat(singleValidationResult.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Pass)));
     }
 
-    private File locateResource(String fileName) {
-        String file = Thread.currentThread().getContextClassLoader().getResource(fileName).getFile();
-        return new File(file);
+    @Test
+    public void whenFileExistsButItsContentsGotErrorByCountValidation_ThenValidationResultHasError() throws IOException, InterruptedException {
+        Path outputDirectory = ValidatorFileUtils.createOutputDir(BamCramFileValidator.FOLDER_PREFIX_FOR_USI_BAM_CRAM_VALIDATION);
+        doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.bamCramFileValidator).getCommandLineParams();
+        doNothing().when(this.bamCramFileValidator).executeValidation(any(String.class));
+
+        doReturn(new ArrayList<>()).when(this.bamCramFileValidator).doQuickCheckValidation(outputDirectory);
+
+        doNothing().when(this.bamCramFileValidator).deleteTemporaryFile(any(File.class));
+
+        List<String> fileContent = Arrays.asList(
+                INVALID_CODE_LENGTHS_SET_ERROR_MESSAGE,
+                SAMVIEW_BAD_HEADER_BAM_ERROR_MESSAGE
+        );
+
+        File reportFile = createTestResources(fileContent, "bam_report_with_no_errors.txt");
+
+        doReturn(reportFile).when(this.bamCramFileValidator).getReportFile(any(Path.class));
+
+        List<SingleValidationResult> validationError = bamCramFileValidator.validateFileContent();;
+
+        assertThat(validationError, hasSize(2));
+
+        final SingleValidationResult singleValidationResult1 = validationError.get(0);
+
+        assertThat(singleValidationResult1.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
+        assertThat(singleValidationResult1.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Error)));
+        assertThat(singleValidationResult1.getMessage(), is(equalTo(INVALID_CODE_LENGTHS_SET_ERROR_MESSAGE)));
+
+        final SingleValidationResult singleValidationResult2 = validationError.get(1);
+
+        assertThat(singleValidationResult2.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
+        assertThat(singleValidationResult2.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Error)));
+        assertThat(singleValidationResult2.getMessage(), is(equalTo(SAMVIEW_BAD_HEADER_BAM_ERROR_MESSAGE)));
     }
 
     private File createTestResources(List<String> fileContent, String fileName) throws IOException {
