@@ -35,7 +35,7 @@ public class CommandLineParameterCheckerTest {
     private static final String VALIDATION_RESULT_UUID = "112233-aabbcc-223344";
     private static final String FILE_UUID = "9999-aabbcc-223344";
     private static final String FILE_TYPE = "fastQ";
-    private static final String NOT_SUPPORTED_FILE_TYPE = "cram";
+    private static final String NOT_SUPPORTED_FILE_TYPE = "qseq";
 
     @Test
     public void whenFileIsNotExistsInTheProvidedPath_ThenThrowsFileNotFoundException() {
