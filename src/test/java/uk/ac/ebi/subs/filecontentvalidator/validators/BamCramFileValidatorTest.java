@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
@@ -58,6 +59,7 @@ public class BamCramFileValidatorTest {
     private static final String EXE_PATH = "/path/to/bamcram/validator";
     private static final String OUTPUT_DIR = "/fake/out";
     private Path outputPath = Paths.get(OUTPUT_DIR);
+    private static final String REPORT_FILE_NAME = "bamcram_report.txt";
 
     @Before
     public void buildUp() {
@@ -68,12 +70,18 @@ public class BamCramFileValidatorTest {
     @Test
     public void test_command_line() {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.bamCramFileValidator).getCommandLineParams();
+
+        String reportFileName = String.join("/",
+                OUTPUT_DIR,
+                String.join("_", UUID.randomUUID().toString(), REPORT_FILE_NAME)
+        );
+
         String expectedCommandLine = String.join(" ",
                 EXE_PATH,
                 "quickcheck -vv", TEST_FILE_PATH,
-                "2> ", OUTPUT_DIR
+                "2> ", reportFileName
         );
-        String actualCommandLine = bamCramFileValidator.quickCheckValidationCommand(outputPath);
+        String actualCommandLine = bamCramFileValidator.quickCheckValidationCommand(reportFileName);
         assertThat(actualCommandLine, is(equalTo(expectedCommandLine)));
     }
 
@@ -164,7 +172,12 @@ public class BamCramFileValidatorTest {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.bamCramFileValidator).getCommandLineParams();
         doNothing().when(this.bamCramFileValidator).executeValidation(any(String.class));
 
-        doReturn(new ArrayList<>()).when(this.bamCramFileValidator).doQuickCheckValidation(outputDirectory);
+        String reportFileName = String.join("/",
+                TEST_FILE_PATH.toString(),
+                String.join("_", UUID.randomUUID().toString(), REPORT_FILE_NAME)
+        );
+
+        doReturn(new ArrayList<>()).when(this.bamCramFileValidator).doQuickCheckValidation(outputDirectory, reportFileName);
 
         doNothing().when(this.bamCramFileValidator).deleteTemporaryFile(any(File.class));
 
