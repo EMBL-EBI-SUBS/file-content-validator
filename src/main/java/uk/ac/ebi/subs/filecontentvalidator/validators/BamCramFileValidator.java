@@ -11,14 +11,11 @@ import uk.ac.ebi.subs.filecontentvalidator.config.CommandLineParams;
 import uk.ac.ebi.subs.filecontentvalidator.service.SingleValidationResultBuilder;
 import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +26,7 @@ public class BamCramFileValidator implements FileValidator {
     static final String FOLDER_PREFIX_FOR_USI_BAM_CRAM_VALIDATION = "usi-bam-cram-validation";
     public static final String VERBOSITY_MESSAGE = "verbosity";
     private static final String REPORT_FILE_NAME = "bamcram_report.txt";
+    public static final String REMOVE_STANDARD_OUTPUT = "> /dev/null";
 
     @Value("${fileContentValidator.bamcram.validatorPath}")
     private String validatorPath;
@@ -41,18 +39,10 @@ public class BamCramFileValidator implements FileValidator {
 
     @Override
     public List<SingleValidationResult> validateFileContent() throws IOException, InterruptedException {
-        Path outputDirectory = ValidatorFileUtils.createOutputDir(FOLDER_PREFIX_FOR_USI_BAM_CRAM_VALIDATION);
-        LOGGER.info("output will be written to {}", outputDirectory);
-
-        String reportFileName = String.join("/",
-                outputDirectory.toString(),
-                String.join("_", UUID.randomUUID().toString(), REPORT_FILE_NAME)
-        );
-
-        List<SingleValidationResult> results = doQuickCheckValidation(outputDirectory, reportFileName);
+        List<SingleValidationResult> results = doQuickCheckValidation();
 
         if (results.isEmpty()) {
-            results.addAll(doCountValidation(outputDirectory, reportFileName));
+            results.addAll(doCountValidation());
         }
 
         if (results.isEmpty()) {
@@ -62,16 +52,19 @@ public class BamCramFileValidator implements FileValidator {
         return results;
     }
 
-    void executeValidation(String command) throws IOException, InterruptedException {
+    String getValidationOutput(String command) throws IOException, InterruptedException {
         LOGGER.info("command: {}", command);
-        Process process = Runtime.getRuntime().exec(command);
-        process.waitFor();
+        java.util.Scanner validationOutput =
+                new java.util.Scanner(Runtime.getRuntime().exec(command)
+                        .getErrorStream()).useDelimiter("\\A");
+
+        return validationOutput.hasNext() ? validationOutput.next() : "";
     }
 
-    List<SingleValidationResult> parseOutputFile(File reportFile) throws FileNotFoundException {
+    List<SingleValidationResult> parseOutput(String validationOutput) throws FileNotFoundException {
         List<SingleValidationResult> results = new ArrayList<>();
 
-        Scanner scanner = new Scanner(reportFile);
+        Scanner scanner = new Scanner(validationOutput);
         scanner.useDelimiter("\n");
 
         while (scanner.hasNext()) {
@@ -86,49 +79,35 @@ public class BamCramFileValidator implements FileValidator {
 
         LOGGER.info("results: {}", results);
 
-        deleteTemporaryFile(reportFile);
-
         return results;
     }
 
-    File getReportFile(Path outputDirectory) {
-        return ValidatorFileUtils.findOutputFile(outputDirectory);
+    List<SingleValidationResult> doQuickCheckValidation() throws IOException, InterruptedException {
+        return doValidation(quickCheckValidationCommand());
     }
 
-    void deleteTemporaryFile(File reportFile) {
-        reportFile.delete();
+    List<SingleValidationResult> doCountValidation() throws IOException, InterruptedException {
+        return doValidation(countValidationCommand());
     }
 
-    List<SingleValidationResult> doQuickCheckValidation(Path outputDirectory, String reportFileName) throws IOException, InterruptedException {
-        return doValidation(quickCheckValidationCommand(reportFileName), outputDirectory);
-    }
-
-    List<SingleValidationResult> doCountValidation(Path outputDirectory, String reportFileName) throws IOException, InterruptedException {
-        return doValidation(countValidationCommand(reportFileName), outputDirectory);
-    }
-
-    private List<SingleValidationResult> doValidation(String validationCommand, Path outputDirectory)
+    private List<SingleValidationResult> doValidation(String validationCommand)
             throws IOException, InterruptedException {
-        executeValidation(validationCommand);
+        String validationOutput = getValidationOutput(validationCommand);
 
-        File reportFile = getReportFile(outputDirectory);
-
-        return parseOutputFile(reportFile);
+        return parseOutput(validationOutput);
     }
 
-    String quickCheckValidationCommand(String reportFileName) {
+    String quickCheckValidationCommand() {
         return String.join(" ",
                 validatorPath,
-                "quickcheck -vv", getCommandLineParams().getFilePath(),
-                "2> ", reportFileName
+                "quickcheck -vv", getCommandLineParams().getFilePath()
         );
     }
 
-    String countValidationCommand(String reportFileName) {
+    String countValidationCommand() {
         return String.join(" ",
                 validatorPath,
-                "view -c", getCommandLineParams().getFilePath(),
-                "2> ", reportFileName
+                "view -c", getCommandLineParams().getFilePath()
         );
     }
 }
