@@ -52,7 +52,7 @@ public class BamCramFileValidator implements FileValidator {
         return results;
     }
 
-    String executeValidation(String command) throws IOException, InterruptedException {
+    String getValidationOutput(String command) throws IOException, InterruptedException {
         LOGGER.info("command: {}", command);
         java.util.Scanner validationOutput =
                 new java.util.Scanner(Runtime.getRuntime().exec(command)
@@ -92,7 +92,7 @@ public class BamCramFileValidator implements FileValidator {
 
     private List<SingleValidationResult> doValidation(String validationCommand)
             throws IOException, InterruptedException {
-        String validationOutput = executeValidation(validationCommand);
+        String validationOutput = getValidationOutput(validationCommand);
 
         return parseOutput(validationOutput);
     }

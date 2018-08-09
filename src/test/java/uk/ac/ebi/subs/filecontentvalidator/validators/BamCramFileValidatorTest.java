@@ -101,7 +101,7 @@ public class BamCramFileValidatorTest {
     @Test
     public void whenFileExistsButItsContentsGotErrorByQuickCheckValidation_ThenValidationResultHasError() throws IOException, InterruptedException {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.bamCramFileValidator).getCommandLineParams();
-        doReturn(ERROR_REPORT_FROM_QUICKCHECK).when(this.bamCramFileValidator).executeValidation(any(String.class));
+        doReturn(ERROR_REPORT_FROM_QUICKCHECK).when(this.bamCramFileValidator).getValidationOutput(any(String.class));
 
         List<SingleValidationResult> validationError = bamCramFileValidator.validateFileContent();;
         final SingleValidationResult singleValidationResult = validationError.get(0);
@@ -116,7 +116,7 @@ public class BamCramFileValidatorTest {
     @Test
     public void whenFileExistsAndItsContentsCorrect_ThenValidationResultHasOK() throws IOException, InterruptedException {
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.bamCramFileValidator).getCommandLineParams();
-        doReturn(OK_REPORT_FROM_QUICKCHECK).when(this.bamCramFileValidator).executeValidation(any(String.class));
+        doReturn(OK_REPORT_FROM_QUICKCHECK).when(this.bamCramFileValidator).getValidationOutput(any(String.class));
 
         List<SingleValidationResult> validationResults = bamCramFileValidator.validateFileContent();;
         final SingleValidationResult singleValidationResult = validationResults.get(0);
@@ -133,7 +133,7 @@ public class BamCramFileValidatorTest {
         );
 
         doReturn(CommandLineParamBuilder.build(VALIDATION_RESULT_UUID, FILE_UUID, TEST_FILE_PATH, FILE_TYPE)).when(this.bamCramFileValidator).getCommandLineParams();
-        doReturn(String.join("\n", fileContent)).when(this.bamCramFileValidator).executeValidation(any(String.class));
+        doReturn(String.join("\n", fileContent)).when(this.bamCramFileValidator).getValidationOutput(any(String.class));
 
         doReturn(new ArrayList<>()).when(this.bamCramFileValidator).doQuickCheckValidation();
 
