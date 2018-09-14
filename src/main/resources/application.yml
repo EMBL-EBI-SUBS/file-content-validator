@@ -1,3 +1,7 @@
 fileContentValidator:
   fastQ:
     validatorPath: /path/to/fastq/validator
+  vcf:
+    validatorPath: /path/to/vcf/validator
+  bamcram:
+    validatorPath: /path/to/bamcram/validator
