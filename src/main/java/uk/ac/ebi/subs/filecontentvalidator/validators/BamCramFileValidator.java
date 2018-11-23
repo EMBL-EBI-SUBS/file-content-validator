@@ -83,7 +83,12 @@ public class BamCramFileValidator implements FileValidator {
     }
 
     List<SingleValidationResult> doQuickCheckValidation() throws IOException, InterruptedException {
-        return doValidation(quickCheckValidationCommand());
+        // TODO karoly: temporary switch off the quickcheck validation
+        // we should put it back when samtools has been updated to greater then 1.9
+        // https://github.com/samtools/samtools/pull/920
+        //return doValidation(quickCheckValidationCommand());
+
+        return new ArrayList<>();
     }
 
     List<SingleValidationResult> doCountValidation() throws IOException, InterruptedException {
