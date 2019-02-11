@@ -19,7 +19,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.hidetake.ssh'
 
 group = 'uk.ac.ebi.subs'
-version = '0.3.3-SNAPSHOT'
+version = '0.3.4-SNAPSHOT'
 sourceCompatibility = 1.8
 
 mainClassName = "uk.ac.ebi.subs.FileContentValidatorApplication"
@@ -37,7 +37,8 @@ dependencies {
         exclude group:'org.springframework.boot', module: 'spring-boot-starter-data-mongodb'
     }
     compile('uk.ac.ebi.subs:subs-messaging:0.4.0-SNAPSHOT')
-
+    
+    compile("de.siegmar:logback-gelf:1.1.0")
 
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
