@@ -19,7 +19,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'org.hidetake.ssh'
 
 group = 'uk.ac.ebi.subs'
-version = '0.3.4-SNAPSHOT'
+version = '0.3.5-SNAPSHOT'
 sourceCompatibility = 1.8
 
 mainClassName = "uk.ac.ebi.subs.FileContentValidatorApplication"
@@ -61,19 +61,42 @@ publish {
 }
 
 remotes {
-    devFCV {
+    devFCVOnCluster {
         role('dev')
-        host = project.hasProperty(project.name + "DevDeployTarget") ? getProperty(project.name + "DevDeployTarget") : 'localhost'
+        host = project.hasProperty(project.name + "DevOnClusterDeployTarget") ? getProperty(project.name + "DevOnClusterDeployTarget") : 'localhost'
     }
-    testFCV {
+    devFCVOnFUSHH {
+        role('dev')
+        host = project.hasProperty(project.name + "DevOnFUSHHDeployTarget") ? getProperty(project.name + "DevOnFUSHHDeployTarget") : 'localhost'
+    }
+    testFCVOnCluster {
         role('test')
-        host = project.hasProperty(project.name + "TestDeployTarget") ? getProperty(project.name + "TestDeployTarget") : 'localhost'
+        host = project.hasProperty(project.name + "TestOnClusterDeployTarget") ? getProperty(project.name + "TestOnClusterDeployTarget") : 'localhost'
     }
-    prodFCV {
+    testFCVOnFUSHH1 {
+        role('test')
+        host = project.hasProperty(project.name + "TestOnFUSHH1DeployTarget") ? getProperty(project.name + "TestOnFUSHH1DeployTarget") : 'localhost'
+    }
+    testFCVOnFUSHH2 {
+        role('test')
+        host = project.hasProperty(project.name + "TestOnFUSHH2DeployTarget") ? getProperty(project.name + "TestOnFUSHH2DeployTarget") : 'localhost'
+    }
+    prodFCVOnCluster {
         role('prod')
-        host = project.hasProperty(project.name + "ProdDeployTarget") ? getProperty(project.name + "ProdDeployTarget") : 'localhost'
+        host = project.hasProperty(project.name + "ProdOnClusterDeployTarget") ? getProperty(project.name + "ProdOnClusterDeployTarget") : 'localhost'
     }
-}
+    prodFCVOnFUSHH1 {
+        role('prod')
+        host = project.hasProperty(project.name + "ProdOnFUSHH1DeployTarget") ? getProperty(project.name + "ProdOnFUSHH1DeployTarget") : 'localhost'
+    }
+    prodFCVOnFUSHH2 {
+        role('prod')
+        host = project.hasProperty(project.name + "ProdOnFUSHH2DeployTarget") ? getProperty(project.name + "ProdOnFUSHH2DeployTarget") : 'localhost'
+    }
+    prodFCVOnFUSHH3 {
+        role('prod')
+        host = project.hasProperty(project.name + "ProdOnFUSHH3DeployTarget") ? getProperty(project.name + "ProdOnFUSHH3DeployTarget") : 'localhost'
+    }}
 
 ssh.settings {
     user = 'sub_adm'
