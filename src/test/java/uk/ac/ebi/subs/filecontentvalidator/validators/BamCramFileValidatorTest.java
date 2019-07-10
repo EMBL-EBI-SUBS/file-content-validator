@@ -15,6 +15,7 @@ import uk.ac.ebi.subs.validator.data.SingleValidationResult;
 import uk.ac.ebi.subs.validator.data.structures.SingleValidationResultStatus;
 import uk.ac.ebi.subs.validator.data.structures.ValidationAuthor;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,11 +48,14 @@ public class BamCramFileValidatorTest {
     private static final String VALIDATION_RESULT_UUID = "112233-aabbcc-223344";
     private static final String FILE_UUID = "9999-aabbcc-223344";
     private static final String FILE_TYPE = "bam";
-    private static final String ERROR_MESSAGE = "2.quickcheck.badheader.bam caused an error whilst reading its header.";
+    private static final String ERROR_MESSAGE = "quickcheck.badheader.bam caused an error whilst reading its header.";
     private static final String INVALID_CODE_LENGTHS_SET_ERROR_MESSAGE = "[E::inflate_gzip_block] Inflate operation failed: invalid code lengths set";
     private static final String SAMVIEW_BAD_HEADER_BAM_ERROR_MESSAGE = "[main_samview] fail to read the header from \"2.quickcheck.badheader.bam\".";
 
-    private static final String ERROR_REPORT_FROM_QUICKCHECK = "verbosity set to 2\n2.quickcheck.badheader.bam caused an error whilst reading its header.";
+    private static final String ERROR_REPORT_FROM_QUICKCHECK =
+            "verbosity set to 2\nquickcheck.badheader.bam caused an error whilst reading its header.";
+    private static final String ERROR_REPORT_FROM_QUICKCHECK_WITH_FILEPATH =
+            "verbosity set to 2\n/path/to/file/quickcheck.badheader.bam caused an error whilst reading its header.";
     private static final String OK_REPORT_FROM_QUICKCHECK = "verbosity set to 2\n";
 
     private static final String EXE_PATH = "/path/to/bamcram/validator";
@@ -82,8 +86,7 @@ public class BamCramFileValidatorTest {
         bamCramFileValidator = new BamCramFileValidator(commandLineParams, singleValidationResultBuilder);
 
         List<SingleValidationResult> expectedResults = Collections.singletonList(
-                singleValidationResultBuilder.buildSingleValidationResultWithErrorStatus(
-                        "2.quickcheck.badheader.bam caused an error whilst reading its header.")
+                singleValidationResultBuilder.buildSingleValidationResultWithErrorStatus(ERROR_MESSAGE)
         );
 
         List<SingleValidationResult> actualResults = bamCramFileValidator.parseOutput(ERROR_REPORT_FROM_QUICKCHECK);
@@ -152,5 +155,17 @@ public class BamCramFileValidatorTest {
         assertThat(singleValidationResult2.getValidationAuthor(), is(equalTo(ValidationAuthor.FileContent)));
         assertThat(singleValidationResult2.getValidationStatus(), is(equalTo(SingleValidationResultStatus.Error)));
         assertThat(singleValidationResult2.getMessage(), is(equalTo(SAMVIEW_BAD_HEADER_BAM_ERROR_MESSAGE)));
+    }
+
+    @Test
+    public void whenReturningErrorMessage_ThenFilePathGetStrippedFromTheFileName() throws FileNotFoundException {
+        bamCramFileValidator = new BamCramFileValidator(commandLineParams, singleValidationResultBuilder);
+
+        List<SingleValidationResult> expectedResults = Collections.singletonList(
+                singleValidationResultBuilder.buildSingleValidationResultWithErrorStatus(ERROR_MESSAGE)
+        );
+
+        List<SingleValidationResult> actualResults = bamCramFileValidator.parseOutput(ERROR_REPORT_FROM_QUICKCHECK_WITH_FILEPATH);
+        assertThat(actualResults, is(equalTo(expectedResults)));
     }
 }
