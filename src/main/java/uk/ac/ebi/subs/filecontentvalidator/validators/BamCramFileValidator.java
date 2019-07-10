@@ -63,6 +63,7 @@ public class BamCramFileValidator implements FileValidator {
 
     List<SingleValidationResult> parseOutput(String validationOutput) throws FileNotFoundException {
         List<SingleValidationResult> results = new ArrayList<>();
+        String patternForRemovePathFromAbsoluteFileName = "(/[a-zA-Z0-9_-].*)+/([a-zA-Z0-9_-]+.[a-zA-Z]*)";
 
         Scanner scanner = new Scanner(validationOutput);
         scanner.useDelimiter("\n");
@@ -73,6 +74,8 @@ public class BamCramFileValidator implements FileValidator {
             if (message.startsWith(VERBOSITY_MESSAGE)) {
                 continue;
             }
+
+            message = message.replaceAll(patternForRemovePathFromAbsoluteFileName, "$2");
 
             results.add(singleValidationResultBuilder.buildSingleValidationResultWithErrorStatus(message));
         }
