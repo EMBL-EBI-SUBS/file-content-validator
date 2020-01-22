@@ -50,10 +50,15 @@ dependencies {
 }
 
 test {
+    runWithMongoDb = true
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
     }
+}
+
+mongo {
+    mongoVersion = "3.4.3"
 }
 
 springBoot {
