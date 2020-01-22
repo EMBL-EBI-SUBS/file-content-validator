@@ -3,6 +3,15 @@ language: java
 jdk:
 - oraclejdk11
 
+addons:
+  apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.4-precise
+    packages:
+      - mongodb-org-server
+      - mongodb-org-shell
+
 install: ./gradlew assemble
 
 before_script:
