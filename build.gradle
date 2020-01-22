@@ -1,28 +1,31 @@
 buildscript {
 	ext {
-		springBootVersion = '1.5.10.RELEASE'
+		springBootVersion = '1.5.21.RELEASE'
 	}
 	repositories {
 		mavenCentral()
 	}
 	dependencies {
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-        classpath 'org.hidetake:gradle-ssh-plugin:1.1.3'
 	}
 }
 
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'application'
-apply plugin: 'maven-publish'
-apply plugin: 'org.hidetake.ssh'
+plugins {
+    id 'java-library'
+    id 'org.hidetake.ssh' version "2.10.1"
+    id 'org.springframework.boot' version '1.5.21.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+    id 'application'
+}
 
 group = 'uk.ac.ebi.subs'
 version = '0.3.6-SNAPSHOT'
-sourceCompatibility = 1.8
-
 mainClassName = "uk.ac.ebi.subs.FileContentValidatorApplication"
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
 
 repositories {
 	mavenCentral()
@@ -30,15 +33,16 @@ repositories {
 }
 
 dependencies {
-    compileOnly('org.projectlombok:lombok')
+    implementation('org.springframework.boot:spring-boot-starter')
+    implementation('org.springframework.boot:spring-boot-starter-amqp')
 
-    compile('org.springframework.boot:spring-boot-starter')
-    compile('uk.ac.ebi.subs:validator-common:2.6.3-SNAPSHOT') {
-        exclude group:'org.springframework.boot', module: 'spring-boot-starter-data-mongodb'
-    }
-    compile('uk.ac.ebi.subs:subs-messaging:0.4.0-SNAPSHOT')
+    implementation('uk.ac.ebi.subs:validator-common:3.14.0-SNAPSHOT')
+    implementation('uk.ac.ebi.subs:subs-messaging:0.6.0-SNAPSHOT')
     
-    compile("de.siegmar:logback-gelf:1.1.0")
+    implementation("de.siegmar:logback-gelf:1.1.0")
+
+    compileOnly("org.projectlombok:lombok:1.18.10")
+    annotationProcessor 'org.projectlombok:lombok:1.18.10'
 
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 }
@@ -55,10 +59,6 @@ springBoot {
 }
 
 ext.gradle_env = hasProperty('env') ? env : 'dev'
-
-publish {
-    dependsOn assemble
-}
 
 remotes {
     devFCVOnCluster {
@@ -110,7 +110,7 @@ if (project.hasProperty('sshPassphrase')) {
     ssh.settings.passphrase = sshPassphrase
 }
 
-task deployJar(type: SshTask, dependsOn: 'build') {
+task deployJar(dependsOn: 'build') {
     doLast {
         sshRun()
     }
@@ -119,7 +119,7 @@ task deployJar(type: SshTask, dependsOn: 'build') {
     }
 }
 
-task testSsh(type: SshTask) {
+task testSsh() {
     doLast {
         sshTestRun()
     }
