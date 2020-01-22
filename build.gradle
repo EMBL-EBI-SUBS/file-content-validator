@@ -36,7 +36,6 @@ repositories {
 dependencies {
     implementation('org.springframework.boot:spring-boot-starter')
     implementation('org.springframework.boot:spring-boot-starter-amqp')
-    implementation('org.springframework.boot:spring-boot-starter-data-mongodb')
 
     implementation('uk.ac.ebi.subs:validator-common:3.14.0-SNAPSHOT')
     implementation('uk.ac.ebi.subs:subs-messaging:0.6.0-SNAPSHOT')
